@@ -40,9 +40,9 @@ test('usage runs the built CLI from the checkout root', async () => {
   ])
 })
 
-test('testing documents both suites after installation and usage', async () => {
+test('testing documents both suites and the dependency audit after installation and usage', async () => {
   const readme = await readFile(readmeUrl, 'utf8')
-  expect(commands(section(readme, 'Testing'))).toEqual(['npm test', 'npm run test:package'])
+  expect(commands(section(readme, 'Testing'))).toEqual(['npm test', 'npm run test:package', 'npm run test:audit'])
   expect(readme.indexOf('## Installation\n')).toBeLessThan(readme.indexOf('## Usage\n'))
   expect(readme.indexOf('## Usage\n')).toBeLessThan(readme.indexOf('## Testing\n'))
 })

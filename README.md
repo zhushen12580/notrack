@@ -74,13 +74,16 @@ On Windows, optional diagnostic data is reported separately from developer tools
 
 ## Testing
 
-From the checkout root, run both the automated suite and the package installation check:
+From the checkout root, run the automated suite, package installation check, and dependency audit:
 
 ```sh
 npm test
 npm run test:package
+npm run test:audit
 ```
 
 The automated suite uses synthetic tool fixtures and simulated Windows registry reads. The package check builds a local tarball, installs it into a temporary directory inside the checkout, and verifies the installed help, version, and JSON commands with `npx --offline`. Installing its runtime dependencies may access the npm registry; execution checks run offline. The temporary installation is removed afterward.
+
+The dependency audit queries the npm registry for known vulnerabilities, including development dependencies, and fails if any are reported. It requires network access.
 
 Built with Claude Code & Codex
