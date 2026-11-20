@@ -138,6 +138,18 @@ test('fix fixture wrapper uses the real CLI entry', () => {
   expect(result.stdout).toContain("export FIXTURE_TELEMETRY_DISABLED='1'")
 })
 
+test('the default table associates documentation with every individual finding', () => {
+  const run = flag => spawnSync(process.execPath, ['test/run-fixture.mjs', 'mixed', '--', flag], {encoding: 'utf8'})
+  const json = run('--json')
+  const table = run('--no-color')
+  expect(json.status, json.stderr).toBe(0)
+  expect(table.status, table.stderr).toBe(0)
+  for (const tool of JSON.parse(json.stdout).tools) {
+    const row = table.stdout.split('\n').find(line => line.startsWith(tool.name + ' | '))
+    expect(row).toContain(tool.documentationUrl)
+  }
+})
+
 test.each([['windows-off','disabled'],['windows-on','enabled'],['windows-denied','unknown'],['linux',null],['macos',null]])('diagnostics fixture %s', (scenario, status) => {
   const result = spawnSync(process.execPath, ['test/run-fixture.mjs', scenario, '--', '--json'], {encoding:'utf8'})
   expect(result.status, result.stderr).toBe(0)

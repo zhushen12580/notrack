@@ -13,6 +13,41 @@ test('accepts opt-out-only settings without inventing an enabled value', () => {
     expect(() => validateRules([rule('a', {settings: [{...setting, ...patch}]})])).toThrow()
   }
 })
+
+test('accepts typed opt-out aliases and rejects empty, mixed, overlapping or nonfinite values', () => {
+  const setting = {source: 'env', key: 'OPT_OUT', valueType: 'string', disabled: ['1', 'true', 'yes']}
+  expect(validateRules([rule('a', {settings: [setting]})])).toHaveLength(1)
+  for (const patch of [
+    {disabled: []}, {disabled: ['1', 1]}, {disabled: ['1', '1']}, {enabled: 'true'},
+    {valueType: 'number', disabled: [0, Infinity]}, {valueType: 'number', disabled: [0], enabled: NaN},
+  ]) {
+    expect(() => validateRules([rule('a', {settings: [{...setting, ...patch}]})])).toThrow()
+  }
+})
+
+test('presence conditions are environment-only and cannot declare value matches', () => {
+  const setting = {source: 'env', key: 'OPT_OUT', valueType: 'presence'}
+  expect(validateRules([rule('a', {settings: [setting]})])).toHaveLength(1)
+  for (const patch of [{key: 'BAD;'}, {disabled: '1'}, {enabled: '0'},
+    {source: 'config', path: '{home}/tool.json', field: ['off']}]) {
+    expect(() => validateRules([rule('a', {configPaths: ['{home}/tool.json'], settings: [{...setting, ...patch}]})])).toThrow()
+  }
+})
+
+test('any-disabled combination requires documented alternative sources and excludes ordered precedence', () => {
+  const r = rule('a', {supportsDoNotTrack: true,
+    settings: [{source: 'env', key: 'OPT_OUT', valueType: 'string', disabled: '1'}],
+    combination: {mode: 'any-disabled', documentationUrl: 'https://example.com/combination'},
+  })
+  expect(validateRules([r])).toEqual([r])
+  for (const patch of [
+    {combination: {mode: 'any-disabled'}},
+    {combination: {mode: 'any-disabled', documentationUrl: 'http://example.com'}},
+    {combination: {mode: 'unsupported', documentationUrl: 'https://example.com'}},
+    {supportsDoNotTrack: false},
+    {precedence: {order: [0, 'dnt'], documentationUrl: 'https://example.com'}},
+  ]) expect(() => validateRules([{...r, ...patch}])).toThrow()
+})
 test.each([
   {id: '../a'}, {name: ''}, {category: ''}, {platforms: ['invalid']}, {commands: ['../tool']},
   {commands: [], configPaths: []}, {configPaths: ['{home}/../secret']}, {configPaths: ['{other}/file']},

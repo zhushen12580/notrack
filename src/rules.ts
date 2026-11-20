@@ -1,15 +1,22 @@
 export type Status = 'enabled' | 'disabled' | 'default_on' | 'unknown'
 type Scalar = string | boolean | number
-export interface Setting {
-  source: 'env' | 'config'
+export type Setting = {
   key?: string
   path?: string
   field?: string[]
+} & ({
+  source: 'env' | 'config'
   valueType: 'string' | 'boolean' | 'number'
   // Opt-out flags need not have a value that proves telemetry is enabled.
   enabled?: Scalar
-  disabled: Scalar
-}
+  disabled: Scalar | Scalar[]
+} | {
+  source: 'env'
+  // Defined even when empty; the value does not affect the opt-out.
+  valueType: 'presence'
+  enabled?: never
+  disabled?: never
+})
 export interface Action {
   type: 'env' | 'command' | 'manual'
   key?: string
@@ -39,6 +46,8 @@ export interface Rule {
   applicability?: {documentationUrl: string, conditions: LocalCondition[]}
   // Complete highest-first order, including DNT when supported.
   precedence?: {documentationUrl: string, order: (number | 'dnt')[]}
+  // Documented alternatives: any recognized opt-out wins over other settings.
+  combination?: {documentationUrl: string, mode: 'any-disabled'}
   defaultStatus: 'on' | 'off' | 'unknown'
   supportsDoNotTrack: boolean
   documentationUrl: string
@@ -77,14 +86,22 @@ export function validateRules(input: unknown): Rule[] {
     requireValid(url.protocol === 'https:' && !url.username && !url.password)
     requireValid(Array.isArray(r.settings))
     for (const s of r.settings) {
-      requireValid(s && ['env', 'config'].includes(s.source) && ['string', 'boolean', 'number'].includes(s.valueType))
-      requireValid(typeof s.disabled === s.valueType &&
-        (s.enabled === undefined || (typeof s.enabled === s.valueType && s.enabled !== s.disabled)))
-      if (s.valueType === 'number') requireValid(Number.isFinite(s.disabled) &&
-        (s.enabled === undefined || Number.isFinite(s.enabled)))
+      requireValid(s && ['env', 'config'].includes(s.source) && ['string', 'boolean', 'number', 'presence'].includes(s.valueType))
+      if (s.valueType === 'presence') {
+        requireValid(s.source === 'env' && s.disabled === undefined && s.enabled === undefined)
+      } else {
+        const disabled = Array.isArray(s.disabled) ? s.disabled : [s.disabled]
+        const validValue = (v: unknown) => typeof v === s.valueType && (s.valueType !== 'number' || Number.isFinite(v))
+        requireValid(disabled.length > 0 && disabled.every(validValue) && new Set(disabled).size === disabled.length &&
+          (s.enabled === undefined || (validValue(s.enabled) && !disabled.includes(s.enabled))))
+      }
       if (s.source === 'env') requireValid(key(s.key))
       else requireValid(template(s.path) && r.configPaths.includes(s.path) &&
         list(s.field, text) && s.field.length > 0 && !s.field.some((k: string) => ['__proto__', 'constructor', 'prototype'].includes(k)))
+    }
+    if (r.combination !== undefined) {
+      requireValid(r.combination && documentation(r.combination.documentationUrl) && r.combination.mode === 'any-disabled' &&
+        r.precedence === undefined && r.settings.length + Number(r.supportsDoNotTrack) >= 2)
     }
     if (r.precedence !== undefined) {
       const order = r.precedence.order

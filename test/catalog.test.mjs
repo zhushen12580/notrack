@@ -219,6 +219,12 @@ for (const c of cases) {
           expect(report.tools[0].status).toBe(example.status)
           if (example.evidence) expect(report.tools[0].evidence).toEqual(example.evidence)
           if (example.detection) expect(report.tools[0].detection).toEqual(example.detection)
+          if (example.status === 'disabled') {
+            for (const shell of ['bash', 'zsh', 'fish', 'powershell']) {
+              expect(await renderFix(report, [getRule(c)], platform(c, example), shell))
+                .toBe('# No telemetry opt-out suggestions.\n')
+            }
+          }
         }
         privateReport(report)
       })

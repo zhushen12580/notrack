@@ -74,6 +74,45 @@ test('environment values use declared types and never leak raw values', async ()
   })
 })
 
+test('opt-out aliases remain type-sensitive and unmatched values stay unknown', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {settings: [
+      {source: 'env', key: 'OPT_OUT', valueType: 'string', disabled: ['1', 'true', 'yes'], enabled: '0'},
+    ]})
+    for (const [value, status] of [
+      [undefined, 'default_on'], ['1', 'disabled'], ['true', 'disabled'], ['yes', 'disabled'],
+      ['0', 'enabled'], ['true ', 'unknown'], ['synthetic-private-value', 'unknown'],
+    ]) {
+      const report = await scan([r], {...p, env: {...p.env, OPT_OUT: value}})
+      expect(report.tools[0].status).toBe(status)
+      expect(JSON.stringify(report)).not.toContain('synthetic-private-value')
+    }
+    // Config aliases retain their declared JSON type instead of coercing strings.
+    const config = rule('config', {commands: [], configPaths: ['{home}/tool.json'], settings: [
+      {source: 'config', path: '{home}/tool.json', field: ['telemetry'], valueType: 'number', disabled: [0, -1], enabled: 1},
+    ]})
+    for (const [value, status] of [[0, 'disabled'], [-1, 'disabled'], [1, 'enabled'], ['0', 'unknown']]) {
+      await writeFile(join(p.home, 'tool.json'), JSON.stringify({telemetry: value}))
+      expect((await scan([config], p)).tools[0].status).toBe(status)
+    }
+  })
+})
+
+test('presence opt-outs include empty and arbitrary values without exposing them', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {settings: [{source: 'env', key: 'OPT_OUT', valueType: 'presence'}]})
+    for (const value of ['', '0', 'false', '1', 'synthetic-private-value']) {
+      const report = await scan([r], {...p, env: {...p.env, OPT_OUT: value}})
+      expect(report.tools[0].status).toBe('disabled')
+      expect(report.tools[0].evidence).toEqual(['env: OPT_OUT'])
+      expect(JSON.stringify(report)).not.toContain('synthetic-private-value')
+    }
+    expect((await scan([r], p)).tools[0].status).toBe('default_on')
+    const windows = {...p, platform: 'win32', env: {Path: 'C:\\bin', opt_out: ''}, stat: async () => ({isFile: () => true})}
+    expect((await scan([r], windows)).tools[0].status).toBe('disabled')
+  })
+})
+
 test('missing configs do not override PATH detection and unsupported platforms are skipped', async () => {
   await withFixture('mixed', async p => {
     const r = rule('a', {configPaths: ['{home}/missing.json'], settings: [
@@ -88,6 +127,32 @@ test('missing configs do not override PATH detection and unsupported platforms a
 const envSetting = {source: 'env', key: 'OPT_OUT', valueType: 'string', enabled: '0', disabled: '1'}
 const brokenSetting = {source: 'config', path: '{home}/broken.json', field: ['telemetry'], valueType: 'boolean', enabled: true, disabled: false}
 const documented = 'https://example.com/precedence'
+test('documented alternative opt-outs cannot cancel each other, while undeclared conflicts stay unknown', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {supportsDoNotTrack: true, settings: [envSetting],
+      combination: {mode: 'any-disabled', documentationUrl: documented}})
+    for (const [env, status, evidence] of [
+      [{OPT_OUT: '0', DO_NOT_TRACK: '1'}, 'disabled', ['env: DO_NOT_TRACK']],
+      [{OPT_OUT: 'synthetic-private-value', DO_NOT_TRACK: '1'}, 'disabled', ['env: DO_NOT_TRACK']],
+      [{OPT_OUT: '1', DO_NOT_TRACK: '0'}, 'disabled', ['env: OPT_OUT']],
+      [{OPT_OUT: '1', DO_NOT_TRACK: '1'}, 'disabled', ['env: OPT_OUT', 'env: DO_NOT_TRACK']],
+      [{OPT_OUT: '0', DO_NOT_TRACK: '0'}, 'enabled', ['env: OPT_OUT']],
+      [{OPT_OUT: 'synthetic-private-value'}, 'unknown', ['env: OPT_OUT']],
+      [{}, 'default_on', ['default: on']],
+    ]) {
+      const report = await scan([r], {...p, env: {...p.env, ...env}})
+      expect(report.tools[0].status).toBe(status)
+      expect(report.tools[0].evidence).toEqual(evidence)
+      expect(JSON.stringify(report)).not.toContain('synthetic-private-value')
+    }
+    const conflict = {...p, env: {...p.env, OPT_OUT: '0', DO_NOT_TRACK: '1'}}
+    expect((await scan([{...r, combination: undefined}], conflict)).tools[0].status).toBe('unknown')
+    const gated = {...r, applicability: {documentationUrl: documented,
+      conditions: [{source: 'env', key: 'VERSION', values: ['2']}]}}
+    expect((await scan([gated], conflict)).tools[0].status).toBe('unknown')
+  })
+})
+
 test('DNT is exact, opt-in per rule, and participates in documented precedence', async () => {
   await withFixture('mixed', async p => {
     const r = rule('a', {supportsDoNotTrack: true, settings: [envSetting]})

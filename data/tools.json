@@ -57,7 +57,7 @@
     "platforms": ["linux", "darwin", "win32"],
     "commands": ["gh"],
     "configPaths": [],
-    "versionScope": "Official GH_TELEMETRY/DO_NOT_TRACK contract checked 2026-11-21. Classify GH_TELEMETRY=false and DO_NOT_TRACK=1 only; GH_TELEMETRY takes precedence. Unknown installed version, host and persisted YAML configuration prevent inferring the default or treating an enabling flag as proof of collection. GitHub Enterprise Server targets are excluded from collection. This covers core gh only, excluding extensions and Copilot. Scope: https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry",
+    "versionScope": "Official GH_TELEMETRY/DO_NOT_TRACK contract checked 2026-11-21. Classify GH_TELEMETRY=false or 0 and DO_NOT_TRACK=1; GH_TELEMETRY takes precedence. Unknown installed version, host and persisted YAML configuration prevent inferring the default or treating an enabling flag as proof of collection. GitHub Enterprise Server targets are excluded from collection. This covers core gh only, excluding extensions and Copilot. Scope: https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": true,
     "documentationUrl": "https://cli.github.com/manual/gh_help_environment",
@@ -66,7 +66,7 @@
       "order": [0, "dnt"]
     },
     "settings": [
-      {"source": "env", "key": "GH_TELEMETRY", "valueType": "string", "disabled": "false"}
+      {"source": "env", "key": "GH_TELEMETRY", "valueType": "string", "disabled": ["false", "0"]}
     ],
     "actions": [
       {"type": "env", "key": "GH_TELEMETRY", "value": "false"}
@@ -97,12 +97,12 @@
     "platforms": ["linux", "darwin", "win32"],
     "commands": ["dotnet"],
     "configPaths": [],
-    "versionScope": "Official .NET SDK opt-out contract checked 2026-11-21: DOTNET_CLI_TELEMETRY_OPTOUT=1. Microsoft SDK distributions default to collecting CLI usage, but a dotnet executable can be a runtime-only installation and does not establish the SDK version or distribution; absence of the opt-out is unknown. This scope concerns SDK CLI telemetry, not applications. Set the variable before installation to suppress the installer event; a current opt-out cannot undo past uploads.",
+    "versionScope": "Official .NET SDK opt-out contract checked 2026-11-21: DOTNET_CLI_TELEMETRY_OPTOUT=1 or true. Microsoft SDK distributions default to collecting CLI usage, but a dotnet executable can be a runtime-only installation and does not establish the SDK version or distribution; absence of the opt-out is unknown. This scope concerns SDK CLI telemetry, not applications. Set the variable before installation to suppress the installer event; a current opt-out cannot undo past uploads.",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": false,
     "documentationUrl": "https://learn.microsoft.com/en-us/dotnet/core/tools/telemetry",
     "settings": [
-      {"source": "env", "key": "DOTNET_CLI_TELEMETRY_OPTOUT", "valueType": "string", "disabled": "1"}
+      {"source": "env", "key": "DOTNET_CLI_TELEMETRY_OPTOUT", "valueType": "string", "disabled": ["1", "true"]}
     ],
     "actions": [
       {"type": "env", "key": "DOTNET_CLI_TELEMETRY_OPTOUT", "value": "1"}
@@ -254,10 +254,14 @@
       "{home}/Library/Application Support/turborepo/telemetry.json",
       "{home}/AppData/Roaming/turborepo/telemetry.json"
     ],
-    "versionScope": "Official Turborepo telemetry contract checked 2026-11-21: TURBO_TELEMETRY_DISABLED=1 or DO_NOT_TRACK=1 opts out. To avoid ambiguous turbo executables, probe only the dedicated user telemetry.json under standard OS config directories (Windows assumes default APPDATA). These files are existence evidence only: persisted preferences, installed schema and TURBO_CONFIG_DIR_PATH overrides are not evaluated, so no environment override means unknown. Project dependencies and task/application telemetry are outside scope. Implementation and path source: https://github.com/vercel/turborepo/blob/main/crates/turborepo-telemetry/src/config.rs ; config directory overrides: https://github.com/vercel/turborepo/blob/main/crates/turborepo-dirs/src/lib.rs",
+    "versionScope": "Official Turborepo telemetry contract checked 2026-11-21: TURBO_TELEMETRY_DISABLED=1 or DO_NOT_TRACK=1 opts out; an inactive alternative flag cannot cancel either opt-out. To avoid ambiguous turbo executables, probe only the dedicated user telemetry.json under standard OS config directories (Windows assumes default APPDATA). These files are existence evidence only: persisted preferences, installed schema and TURBO_CONFIG_DIR_PATH overrides are not evaluated, so no environment override means unknown. Project dependencies and task/application telemetry are outside scope. Implementation and path source: https://github.com/vercel/turborepo/blob/main/crates/turborepo-telemetry/src/config.rs ; config directory overrides: https://github.com/vercel/turborepo/blob/main/crates/turborepo-dirs/src/lib.rs",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": true,
     "documentationUrl": "https://turborepo.dev/docs/telemetry",
+    "combination": {
+      "documentationUrl": "https://github.com/vercel/turborepo/blob/main/crates/turborepo-telemetry/src/config.rs",
+      "mode": "any-disabled"
+    },
     "settings": [
       {"source": "env", "key": "TURBO_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
     ],
@@ -612,7 +616,7 @@
       "vcpkg"
     ],
     "configPaths": [],
-    "versionScope": "Official vcpkg CLI telemetry contract checked 2026-11-21. This covers invocations of vcpkg, not produced libraries. Upstream documents VCPKG_DISABLE_METRICS being set, regardless of value, as an opt-out. The scalar rule records the documented safe literal 1; other values remain conservatively unknown rather than enabled. Although telemetry is normally enabled, bootstrap -disableMetrics and invocation flags can disable it and are not inspected, so no-override status is unknown. No bootstrap script, installed tool or package build is executed. Environment semantics: https://learn.microsoft.com/en-us/vcpkg/users/config-environment#vcpkg_disable_metrics",
+    "versionScope": "Official vcpkg CLI telemetry contract checked 2026-11-21. This covers invocations of vcpkg, not produced libraries. VCPKG_DISABLE_METRICS being set, regardless of value (including empty), is an opt-out. Although telemetry is normally enabled, bootstrap -disableMetrics and invocation flags can disable it and are not inspected, so no-override status is unknown. No bootstrap script, installed tool or package build is executed. Environment semantics: https://learn.microsoft.com/en-us/vcpkg/users/config-environment#vcpkg_disable_metrics",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": false,
     "documentationUrl": "https://learn.microsoft.com/en-us/vcpkg/about/privacy",
@@ -620,8 +624,7 @@
       {
         "source": "env",
         "key": "VCPKG_DISABLE_METRICS",
-        "valueType": "string",
-        "disabled": "1"
+        "valueType": "presence"
       }
     ],
     "actions": [
@@ -730,7 +733,7 @@
       "pwsh"
     ],
     "configPaths": [],
-    "versionScope": "Official PowerShell telemetry contract checked 2026-11-21. This rule detects pwsh, not the separate Windows PowerShell powershell executable. POWERSHELL_TELEMETRY_OPTOUT must be set before starting the process and covers startup and session telemetry; the literal 1 is classified here, while the documented true/yes aliases are not modeled. Without this override, installed version/build and effective settings are unknown: PowerShell 7.6.2+ on Windows can also respect Windows optional diagnostic-data settings, which this tool rule does not use to infer PowerShell state. POWERSHELL_DIAGNOSTICS_OPTOUT controls IPC diagnostic pipes rather than this telemetry. This scope excludes independent module reporting and update requests.",
+    "versionScope": "Official PowerShell telemetry contract checked 2026-11-21. This rule detects pwsh, not the separate Windows PowerShell powershell executable. POWERSHELL_TELEMETRY_OPTOUT must be set before starting the process and covers startup and session telemetry; 1, true and yes are documented opt-out values. Without this override, installed version/build and effective settings are unknown: PowerShell 7.6.2+ on Windows can also respect Windows optional diagnostic-data settings, which this tool rule does not use to infer PowerShell state. POWERSHELL_DIAGNOSTICS_OPTOUT controls IPC diagnostic pipes rather than this telemetry. This scope excludes independent module reporting and update requests.",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": false,
     "documentationUrl": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_telemetry",
@@ -739,7 +742,7 @@
         "source": "env",
         "key": "POWERSHELL_TELEMETRY_OPTOUT",
         "valueType": "string",
-        "disabled": "1"
+        "disabled": ["1", "true", "yes"]
       }
     ],
     "actions": [

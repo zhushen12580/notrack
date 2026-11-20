@@ -33,9 +33,9 @@ export function renderTable(report: Report, color: boolean): string {
     counts[tool.status === 'default_on' ? 'enabled' : tool.status]++
     const code = tool.status === 'disabled' ? 32 : tool.status === 'unknown' ? 33 : 31
     const status = color ? '\x1b[' + code + 'm' + tool.status + '\x1b[0m' : tool.status
-    return [tool.name, tool.detection.join('; '), status, tool.evidence.join('; ')].join(' | ')
+    return [tool.name, tool.detection.join('; '), status, tool.evidence.join('; '), tool.documentationUrl].join(' | ')
   })
-  return ['Tool | Detection | Status | Evidence', ...rows,
+  return ['Tool | Detection | Status | Evidence | Documentation', ...rows,
     'Detected: ' + report.tools.length + '  Enabled: ' + counts.enabled + '  Disabled: ' + counts.disabled + '  Unknown: ' + counts.unknown,
     ...(report.windowsDiagnostics ? ['Windows optional diagnostic data | ' + (color ? '\x1b[' + (report.windowsDiagnostics.status === 'disabled' ? 32 : report.windowsDiagnostics.status === 'enabled' ? 31 : 33) + 'm' + report.windowsDiagnostics.status + '\x1b[0m' : report.windowsDiagnostics.status) + ' | ' + report.windowsDiagnostics.evidence.join('; ')] : []),
     'Inference from visible settings; actual network traffic is outside this scan.'].join('\n') + '\n'

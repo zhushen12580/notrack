@@ -101,16 +101,19 @@ export async function scan(rules: Rule[], p: Platform): Promise<Report> {
         }
       }
       if (value === undefined) continue
-      const status: Status = typeof value !== s.valueType ? 'unknown' :
-        value === s.disabled ? 'disabled' : value === s.enabled ? 'enabled' : 'unknown'
+      const disabled = Array.isArray(s.disabled) ? s.disabled : [s.disabled]
+      const status: Status = s.valueType === 'presence' ? 'disabled' : typeof value !== s.valueType ? 'unknown' :
+        disabled.some(allowed => value === allowed) ? 'disabled' : value === s.enabled ? 'enabled' : 'unknown'
       outcomes.push({status, evidence})
     }
+    const effective = r.combination?.mode === 'any-disabled' && outcomes.some(o => o.status === 'disabled')
+      ? outcomes.filter(o => o.status === 'disabled') : outcomes
     let status: Status = r.defaultStatus === 'on' ? 'default_on' : r.defaultStatus === 'off' ? 'disabled' : 'unknown'
     let evidence = ['default: ' + r.defaultStatus]
-    if (outcomes.length) {
-      status = outcomes.every(o => o.status === outcomes[0].status) ? outcomes[0].status : 'unknown'
-      evidence = outcomes.map(o => o.evidence)
-      if (new Set(outcomes.map(o => o.status)).size > 1) evidence.push('setting precedence unconfirmed')
+    if (effective.length) {
+      status = effective.every(o => o.status === effective[0].status) ? effective[0].status : 'unknown'
+      evidence = effective.map(o => o.evidence)
+      if (new Set(effective.map(o => o.status)).size > 1) evidence.push('setting precedence unconfirmed')
     }
     if (!applicable) {
       status = 'unknown'

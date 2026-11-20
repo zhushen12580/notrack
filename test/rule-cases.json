@@ -75,7 +75,8 @@
     "examples": [
       {"name": "GH_TELEMETRY masks DNT even when the effective result is unconfirmed", "env": {"GH_TELEMETRY": "true", "DO_NOT_TRACK": "1"}, "status": "unknown", "evidence": ["env: GH_TELEMETRY"]},
       {"name": "explicit off takes precedence over DNT", "env": {"GH_TELEMETRY": "false", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: GH_TELEMETRY"]},
-      {"name": "unknown GH_TELEMETRY blocks DNT fallback", "env": {"GH_TELEMETRY": "synthetic-private-value", "DO_NOT_TRACK": "1"}, "status": "unknown", "evidence": ["env: GH_TELEMETRY"]}
+      {"name": "unknown GH_TELEMETRY blocks DNT fallback", "env": {"GH_TELEMETRY": "synthetic-private-value", "DO_NOT_TRACK": "1"}, "status": "unknown", "evidence": ["env: GH_TELEMETRY"]},
+      {"name": "documented GH_TELEMETRY='0' opts out without redundant suggestions", "env": {"GH_TELEMETRY": "0"}, "status": "disabled", "evidence": ["env: GH_TELEMETRY"]}
     ]
   },
   {
@@ -111,7 +112,8 @@
     "examples": [
       {"name": "dotnet alone cannot establish SDK distribution or default-on behavior", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "0"}, "status": "unknown"},
       {"name": "hiding the welcome message is not an opt-out", "env": {"DOTNET_NOLOGO": "true"}, "status": "unknown"},
-      {"name": "invalid opt-out values stay unknown", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "synthetic-private-value"}, "status": "unknown"}
+      {"name": "invalid opt-out values stay unknown", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "documented DOTNET_CLI_TELEMETRY_OPTOUT='true' opts out without redundant suggestions", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "true"}, "status": "disabled", "evidence": ["env: DOTNET_CLI_TELEMETRY_OPTOUT"]}
     ]
   },
   {
@@ -273,7 +275,15 @@
       {"name": "a saved opt-out is detection only when the effective config directory is unconfirmed", "env": {"TURBO_CONFIG_DIR_PATH": "/fixture/other"}, "files": {"{xdgConfig}/turborepo/telemetry.json": "{\"telemetry_enabled\":false}"}, "status": "unknown"},
       {"name": "macOS standard user config provides evidence", "platform": "darwin", "installed": false, "env": {"TURBO_TELEMETRY_DISABLED": "1"}, "files": {"{home}/Library/Application Support/turborepo/telemetry.json": "{}"}, "status": "disabled", "detection": ["config: {home}/Library/Application Support/turborepo/telemetry.json"]},
       {"name": "Windows standard user config provides evidence", "platform": "win32", "installed": false, "env": {"TURBO_TELEMETRY_DISABLED": "1"}, "files": {"{home}/AppData/Roaming/turborepo/telemetry.json": "{}"}, "status": "disabled", "detection": ["config: {home}/AppData/Roaming/turborepo/telemetry.json"]},
-      {"name": "project-only Turborepo installation is not probed", "installed": false, "files": {"{home}/project/turbo.json": "{}", "{home}/project/node_modules/.bin/turbo": ""}, "absent": true}
+      {"name": "project-only Turborepo installation is not probed", "installed": false, "files": {"{home}/project/turbo.json": "{}", "{home}/project/node_modules/.bin/turbo": ""}, "absent": true},
+      {"name": "an inactive alternative flag '0' cannot cancel DNT", "env": {"TURBO_TELEMETRY_DISABLED": "0", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: DO_NOT_TRACK"]},
+      {"name": "an inactive alternative flag '' cannot cancel DNT", "env": {"TURBO_TELEMETRY_DISABLED": "", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: DO_NOT_TRACK"]},
+      {"name": "an inactive alternative flag 'synthetic-private-value' cannot cancel DNT", "env": {"TURBO_TELEMETRY_DISABLED": "synthetic-private-value", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: DO_NOT_TRACK"]},
+      {"name": "an inactive DNT value '0' cannot cancel the dedicated opt-out", "env": {"TURBO_TELEMETRY_DISABLED": "1", "DO_NOT_TRACK": "0"}, "status": "disabled", "evidence": ["env: TURBO_TELEMETRY_DISABLED"]},
+      {"name": "an inactive DNT value 'true' cannot cancel the dedicated opt-out", "env": {"TURBO_TELEMETRY_DISABLED": "1", "DO_NOT_TRACK": "true"}, "status": "disabled", "evidence": ["env: TURBO_TELEMETRY_DISABLED"]},
+      {"name": "an inactive DNT value '' cannot cancel the dedicated opt-out", "env": {"TURBO_TELEMETRY_DISABLED": "1", "DO_NOT_TRACK": ""}, "status": "disabled", "evidence": ["env: TURBO_TELEMETRY_DISABLED"]},
+      {"name": "both opt-outs report their effective evidence", "env": {"TURBO_TELEMETRY_DISABLED": "1", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: TURBO_TELEMETRY_DISABLED", "env: DO_NOT_TRACK"]},
+      {"name": "neither inactive flag establishes effective persisted telemetry settings", "env": {"TURBO_TELEMETRY_DISABLED": "0", "DO_NOT_TRACK": "0"}, "status": "unknown"}
     ]
   },
   {
@@ -748,7 +758,7 @@
       "VCPKG_DISABLE_METRICS",
       "bootstrap",
       "produced libraries",
-      "literal"
+      "regardless of value"
     ],
     "off": {
       "env": {
@@ -764,11 +774,11 @@
     ],
     "examples": [
       {
-        "name": "an unclassified metrics value is conservatively unknown rather than enabled",
+        "name": "presence disables metrics even for an arbitrary private value",
         "env": {
           "VCPKG_DISABLE_METRICS": "synthetic-private-value"
         },
-        "status": "unknown",
+        "status": "disabled",
         "evidence": [
           "env: VCPKG_DISABLE_METRICS"
         ]
@@ -798,6 +808,47 @@
           "{home}/project/vcpkg.json": "{\"dependencies\":[]}"
         },
         "absent": true
+      },
+      {
+        "name": "documented VCPKG_DISABLE_METRICS='' opts out without redundant suggestions",
+        "env": {
+          "VCPKG_DISABLE_METRICS": ""
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: VCPKG_DISABLE_METRICS"
+        ]
+      },
+      {
+        "name": "documented VCPKG_DISABLE_METRICS='0' opts out without redundant suggestions",
+        "env": {
+          "VCPKG_DISABLE_METRICS": "0"
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: VCPKG_DISABLE_METRICS"
+        ]
+      },
+      {
+        "name": "documented VCPKG_DISABLE_METRICS='false' opts out without redundant suggestions",
+        "env": {
+          "VCPKG_DISABLE_METRICS": "false"
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: VCPKG_DISABLE_METRICS"
+        ]
+      },
+      {
+        "name": "Windows environment names are case-insensitive for an empty presence opt-out",
+        "platform": "win32",
+        "env": {
+          "vcpkg_disable_metrics": ""
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: VCPKG_DISABLE_METRICS"
+        ]
       }
     ]
   },
@@ -1071,6 +1122,26 @@
           "{home}/project/Build.ps1": ""
         },
         "absent": true
+      },
+      {
+        "name": "documented POWERSHELL_TELEMETRY_OPTOUT='true' opts out without redundant suggestions",
+        "env": {
+          "POWERSHELL_TELEMETRY_OPTOUT": "true"
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: POWERSHELL_TELEMETRY_OPTOUT"
+        ]
+      },
+      {
+        "name": "documented POWERSHELL_TELEMETRY_OPTOUT='yes' opts out without redundant suggestions",
+        "env": {
+          "POWERSHELL_TELEMETRY_OPTOUT": "yes"
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: POWERSHELL_TELEMETRY_OPTOUT"
+        ]
       }
     ]
   },
