@@ -1,3 +1,4 @@
+import { WINDOWS_DOCS } from './windows.js'
 import type { Platform } from './platform.js'
 import type { Report } from './report.js'
 import type { Action, Rule } from './rules.js'
@@ -46,6 +47,9 @@ export async function renderFix(report: Report, rules: Rule[], platform: Platfor
         lines.add(executable(action, shell))
       }
     }
+  }
+  if (report.windowsDiagnostics && report.windowsDiagnostics.status !== 'disabled') {
+    lines.add('# Windows optional diagnostic data: Settings > Privacy & security (Windows 11) / Privacy (Windows 10) > Diagnostics & feedback > Send optional diagnostic data: Off; managed devices may require an administrator (' + WINDOWS_DOCS + ')')
   }
   if (!lines.size) return '# No telemetry opt-out suggestions.\n'
   return '# Environment assignments affect only this shell and subsequent child processes.\n' + [...lines].join('\n') + '\n'

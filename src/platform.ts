@@ -1,5 +1,7 @@
 import type { Stats } from 'node:fs'
 import { access, readFile, stat } from 'node:fs/promises'
+import { queryRegistry, type RegistryResult } from './windows.js'
+import { release } from 'node:os'
 import { homedir } from 'node:os'
 
 export interface Platform {
@@ -10,7 +12,8 @@ export interface Platform {
   stat(path: string): Promise<Stats>
   access(path: string, mode?: number): Promise<void>
   readFile(path: string, encoding: 'utf8'): Promise<string>
-  readRegistry(key: string, valueName: string): Promise<string>
+  windowsRelease?: string
+  readRegistry(key: string, valueName: string): Promise<RegistryResult>
 }
 
 export function createPlatform(): Platform {
@@ -22,8 +25,7 @@ export function createPlatform(): Platform {
     stat,
     access,
     readFile,
-    async readRegistry() {
-      throw new Error('Registry reads are unavailable')
-    },
+    windowsRelease: release(),
+    readRegistry: queryRegistry,
   }
 }

@@ -1,3 +1,4 @@
+import type { WindowsDiagnostics } from './windows.js'
 import type { Platform } from './platform.js'
 import type { Status } from './rules.js'
 
@@ -15,7 +16,7 @@ export interface Report {
   platform: NodeJS.Platform
   doNotTrack: boolean
   tools: ToolResult[]
-  windowsDiagnostics: null
+  windowsDiagnostics: WindowsDiagnostics | null
 }
 export function emptyReport(platform: Platform): Report {
   return {
@@ -36,5 +37,6 @@ export function renderTable(report: Report, color: boolean): string {
   })
   return ['Tool | Detection | Status | Evidence', ...rows,
     'Detected: ' + report.tools.length + '  Enabled: ' + counts.enabled + '  Disabled: ' + counts.disabled + '  Unknown: ' + counts.unknown,
+    ...(report.windowsDiagnostics ? ['Windows optional diagnostic data | ' + (color ? '\x1b[' + (report.windowsDiagnostics.status === 'disabled' ? 32 : report.windowsDiagnostics.status === 'enabled' ? 31 : 33) + 'm' + report.windowsDiagnostics.status + '\x1b[0m' : report.windowsDiagnostics.status) + ' | ' + report.windowsDiagnostics.evidence.join('; ')] : []),
     'Inference from visible settings; actual network traffic is outside this scan.'].join('\n') + '\n'
 }

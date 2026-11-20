@@ -137,3 +137,20 @@ test('fix fixture wrapper uses the real CLI entry', () => {
   expect(result.status, result.stderr).toBe(0)
   expect(result.stdout).toContain("export FIXTURE_TELEMETRY_DISABLED='1'")
 })
+
+test.each([['windows-off','disabled'],['windows-on','enabled'],['windows-denied','unknown'],['linux',null],['macos',null]])('diagnostics fixture %s', (scenario, status) => {
+  const result = spawnSync(process.execPath, ['test/run-fixture.mjs', scenario, '--', '--json'], {encoding:'utf8'})
+  expect(result.status, result.stderr).toBe(0)
+  const diagnostics = JSON.parse(result.stdout).windowsDiagnostics
+  if (status === null) expect(diagnostics).toBeNull()
+  else expect(diagnostics.status).toBe(status)
+})
+test('Windows table follows summary and fix contains only commented UI guidance', () => {
+  const run = flag => spawnSync(process.execPath, ['test/run-fixture.mjs','windows-on','--',flag], {encoding:'utf8'}).stdout
+  const table = run('--no-color')
+  expect(table.indexOf('Windows optional diagnostic data')).toBeGreaterThan(table.indexOf('Detected:'))
+  const fix = run('--fix')
+  expect(fix).toContain('Diagnostics & feedback')
+  expect(fix).toContain('https://learn.microsoft.com/')
+  expect(fix.trim().split('\n').every(line => line.startsWith('#'))).toBe(true)
+})

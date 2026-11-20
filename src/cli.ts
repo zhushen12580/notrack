@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { scanWindows } from './windows.js'
 import { realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -104,6 +105,7 @@ export async function main(argv: readonly string[], deps: CliDependencies): Prom
   }
 
   const report = await scan(rules, deps.platform)
+  report.windowsDiagnostics = await scanWindows(deps.platform)
   if (options.json) {
     deps.stdout.write(`${JSON.stringify(report)}\n`)
   } else if (options.fix) {

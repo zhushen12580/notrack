@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export async function withFixture(scenario, run) {
-  if (!['empty', 'mixed', 'dnt', 'fix'].includes(scenario)) {
+  if (!['empty', 'mixed', 'dnt', 'fix', 'windows-off', 'windows-on', 'windows-denied', 'linux', 'macos'].includes(scenario)) {
     throw new Error(`Unknown fixture scenario: ${scenario}`)
   }
 
@@ -39,18 +39,27 @@ export async function withFixture(scenario, run) {
         rule('fixture-disabled', {defaultStatus: 'off'}),
         rule('fixture-absent', {commands: ['absent']})]
     }
-    return await run({
-      platform: 'linux',
+    let registryReads = 0
+    const result = await run({
+      platform: scenario.startsWith('windows-') ? 'win32' : scenario === 'macos' ? 'darwin' : 'linux',
+      windowsRelease: '10.0.22631',
       home,
       env: { HOME: home, PATH: bin, ...(scenario === 'dnt' ? {DO_NOT_TRACK: '1'} : {}) },
       stdoutIsTTY: false,
       stat,
       access,
       readFile,
-      async readRegistry() {
-        throw new Error('Unexpected registry read in the empty fixture')
+      async readRegistry(key, name) {
+        registryReads++
+        if (!scenario.startsWith('windows-')) throw new Error('Unexpected registry read')
+        if (scenario === 'windows-denied') return {kind: 'error'}
+        if (name === 'InstallationType') return {kind: 'value', type: 'REG_SZ', value: 'Client'}
+        if (key.includes('CurrentVersion')) return {kind: 'value', type: 'REG_DWORD', value: scenario === 'windows-off' ? 1 : 3}
+        return {kind: 'missing'}
       },
     }, async () => rules)
+    if (['linux', 'macos'].includes(scenario) && registryReads !== 0) throw new Error('Non-Windows registry read')
+    return result
   } finally {
     await rm(root, { recursive: true, force: true })
   }
