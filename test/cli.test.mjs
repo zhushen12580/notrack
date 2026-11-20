@@ -1,0 +1,105 @@
+import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { expect, test, vi } from 'vitest'
+import { withFixture } from './fixtures.mjs'
+
+const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+
+function runFixture(...args) {
+  return spawnSync(process.execPath, ['test/run-fixture.mjs', 'empty', '--', ...args], {
+    encoding: 'utf8',
+    env: { ...process.env, DO_NOT_TRACK: '1' },
+  })
+}
+
+test('empty fixture emits one JSON object with the stable report fields', () => {
+  const result = runFixture('--json')
+
+  expect(result.status, result.stderr).toBe(0)
+  expect(result.stderr).toBe('')
+  expect(JSON.parse(result.stdout)).toEqual({
+    schemaVersion: 1,
+    platform: 'linux',
+    doNotTrack: false,
+    tools: [],
+    windowsDiagnostics: null,
+  })
+})
+
+test.each([
+  [['--fix', '--json'], /--fix.*--json/],
+  [['--unrecognized'], /--unrecognized/],
+  [['unexpected'], /unexpected/i],
+  [['--shell', 'bash'], /--shell.*--fix/],
+  [['--fix', '--shell', 'cmd'], /--shell.*cmd/],
+  [['--fix', '--shell'], /--shell/],
+  [['--color', '--no-color'], /--color.*--no-color/],
+  [['--help', '--unrecognized'], /--unrecognized/],
+])('rejects invalid arguments %j', (args, diagnostic) => {
+  const result = runFixture(...args)
+
+  expect(result.status, result.stderr).toBe(2)
+  expect(result.stdout).toBe('')
+  expect(result.stderr).toMatch(diagnostic)
+})
+
+async function runMain(args, loadRules, env = {}) {
+  const { main } = await import('../dist/cli.js')
+  const stdout = { write: vi.fn() }
+  const stderr = { write: vi.fn() }
+
+  const status = await withFixture('empty', (platform) =>
+    main(args, { platform: { ...platform, env: { ...platform.env, ...env } }, loadRules, stdout, stderr }),
+  )
+  return { status, stdout, stderr }
+}
+
+test.each([
+  ['--help', /Usage: notrack/],
+  ['--version', `${manifest.version}\n`],
+])('%s bypasses rule loading', async (flag, expected) => {
+  const loadRules = vi.fn()
+  const { status, stdout, stderr } = await runMain([flag], loadRules)
+
+  expect(status).toBe(0)
+  expect(stdout.write).toHaveBeenCalledOnce()
+  if (typeof expected === 'string') {
+    expect(stdout.write).toHaveBeenCalledWith(expected)
+  } else {
+    expect(stdout.write.mock.calls[0][0]).toMatch(expected)
+  }
+  expect(stderr.write).not.toHaveBeenCalled()
+  expect(loadRules).not.toHaveBeenCalled()
+})
+
+test.each([
+  ['1', true],
+  ['true', false],
+  ['1 ', false],
+])('interprets DO_NOT_TRACK=%j as %s', async (value, expected) => {
+  const { status, stdout } = await runMain(['--json'], async () => [], { DO_NOT_TRACK: value })
+
+  expect(status).toBe(0)
+  expect(JSON.parse(stdout.write.mock.calls[0][0]).doNotTrack).toBe(expected)
+})
+
+test('validates arguments before loading rules', async () => {
+  const loadRules = vi.fn()
+  const { status, stdout, stderr } = await runMain(['--fix', '--json'], loadRules)
+
+  expect(status).toBe(2)
+  expect(loadRules).not.toHaveBeenCalled()
+  expect(stdout.write).not.toHaveBeenCalled()
+  expect(stderr.write).toHaveBeenCalledOnce()
+})
+
+test.each([
+  async () => { throw new Error('cannot read file') },
+  async () => ({}),
+])('reports invalid or unavailable rules on stderr with exit 1', async (loadRules) => {
+  const { status, stdout, stderr } = await runMain(['--json'], loadRules)
+
+  expect(status).toBe(1)
+  expect(stdout.write).not.toHaveBeenCalled()
+  expect(stderr.write).toHaveBeenCalledWith(expect.stringMatching(/rules/i))
+})
