@@ -8,6 +8,7 @@ import { createPlatform, type Platform } from './platform.js'
 import { renderTable } from './report.js'
 import { validateRules } from './rules.js'
 import { scan } from './scan.js'
+import { renderFix, type Shell } from './fix.js'
 
 interface CliDependencies {
   platform: Platform
@@ -106,7 +107,8 @@ export async function main(argv: readonly string[], deps: CliDependencies): Prom
   if (options.json) {
     deps.stdout.write(`${JSON.stringify(report)}\n`)
   } else if (options.fix) {
-    deps.stdout.write('# No telemetry opt-out suggestions.\n')
+    const shell = (options.shell ?? (deps.platform.platform === 'win32' ? 'powershell' : 'bash')) as Shell
+    deps.stdout.write(await renderFix(report, rules, deps.platform, shell))
   } else {
     const color = options.color === true || (!options['no-color'] && deps.platform.stdoutIsTTY && deps.platform.env.NO_COLOR === undefined)
     deps.stdout.write(renderTable(report, color))

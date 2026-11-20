@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export async function withFixture(scenario, run) {
-  if (!['empty', 'mixed', 'dnt'].includes(scenario)) {
+  if (!['empty', 'mixed', 'dnt', 'fix'].includes(scenario)) {
     throw new Error(`Unknown fixture scenario: ${scenario}`)
   }
 
@@ -28,6 +28,16 @@ export async function withFixture(scenario, run) {
     if (scenario === 'dnt') {
       await writeFile(join(bin, 'tool'), '', {mode: 0o755})
       rules = [rule('fixture-dnt', {supportsDoNotTrack: true}), rule('fixture-env')]
+    }
+    if (scenario === 'fix') {
+      await writeFile(join(bin, 'tool'), '', {mode: 0o755})
+      await writeFile(join(home, 'settings.json'), '{"telemetry":false}')
+      const action = {type: 'env', key: 'FIXTURE_TELEMETRY_DISABLED', value: '1'}
+      rules = [rule('fixture-env', {actions: [action, action]}),
+        rule('fixture-duplicate', {actions: [action]}),
+        rule('fixture-manual', {actions: [{type: 'manual', instruction: 'Settings > Privacy: disable telemetry'}]}),
+        rule('fixture-disabled', {defaultStatus: 'off'}),
+        rule('fixture-absent', {commands: ['absent']})]
     }
     return await run({
       platform: 'linux',

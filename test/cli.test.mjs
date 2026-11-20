@@ -131,3 +131,9 @@ test('dnt fixture reports exact support, status and safe evidence', () => {
     ['fixture-env', false, 'default_on', ['default: on']],
   ])
 })
+
+test('fix fixture wrapper uses the real CLI entry', () => {
+  const result = spawnSync(process.execPath, ['test/run-fixture.mjs', 'fix', '--', '--fix'], {encoding: 'utf8'})
+  expect(result.status, result.stderr).toBe(0)
+  expect(result.stdout).toContain("export FIXTURE_TELEMETRY_DISABLED='1'")
+})
