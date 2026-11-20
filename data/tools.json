@@ -502,7 +502,7 @@
     "platforms": ["linux", "darwin", "win32"],
     "commands": ["flyctl"],
     "configPaths": [],
-    "versionScope": "Official Fly CLI analytics contract checked 2026-11-21: flyctl settings analytics disable saves the preference; FLY_SEND_METRICS=false overrides the saved send_metrics value. The YAML config also carries credentials and is never read, so absent environment overrides give unknown. Probe only flyctl, excluding the ambiguous fly alias and project fly.toml. This scope concerns anonymized CLI usage analytics, excluding the separate synthetics agent, application metrics and service-side logs. Environment guard: https://github.com/superfly/flyctl/blob/master/internal/config/config.go ; command: https://github.com/superfly/flyctl/blob/master/internal/command/settings/analytics.go",
+    "versionScope": "Official Fly CLI analytics contract checked 2026-11-21: flyctl settings analytics disable saves the preference; FLY_SEND_METRICS overrides the saved send_metrics value, so suggestions set it to false before saving the preference, including when inherited as true. The YAML config also carries credentials and is never read, so absent environment overrides give unknown. Probe only flyctl, excluding the ambiguous fly alias and project fly.toml. This scope concerns anonymized CLI usage analytics, excluding the separate synthetics agent, application metrics and service-side logs. Environment guard: https://github.com/superfly/flyctl/blob/v0.5.14/internal/config/config.go ; command: https://github.com/superfly/flyctl/blob/v0.5.14/internal/command/settings/analytics.go",
     "defaultStatus": "unknown",
     "supportsDoNotTrack": false,
     "documentationUrl": "https://fly.io/docs/flyctl/settings-analytics/",
@@ -510,6 +510,7 @@
       {"source": "env", "key": "FLY_SEND_METRICS", "valueType": "string", "disabled": "false"}
     ],
     "actions": [
+      {"type": "env", "key": "FLY_SEND_METRICS", "value": "false"},
       {"type": "command", "program": "flyctl", "args": ["settings", "analytics", "disable"]}
     ]
   },

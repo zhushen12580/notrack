@@ -61,3 +61,14 @@ test('the final line is the required attribution', async () => {
   expect(readme.replace(/\r?\n$/, '').split(/\r?\n/).at(-1))
     .toBe('Built with Claude Code & Codex')
 })
+
+test('the environment reference covers scan controls and every bundled environment setting', async () => {
+  const readme = await readFile(readmeUrl, 'utf8')
+  expect(section(readme, 'Environment')).toContain('(.env.example)')
+  const example = await readFile(new URL('../.env.example', import.meta.url), 'utf8')
+  expect(example).toContain('does not automatically')
+  const catalog = JSON.parse(await readFile(new URL('../data/tools.json', import.meta.url), 'utf8'))
+  const keys = ['DO_NOT_TRACK', 'NO_COLOR', 'XDG_CONFIG_HOME',
+    ...catalog.flatMap(rule => rule.settings.filter(setting => setting.source === 'env').map(setting => setting.key))]
+  for (const key of new Set(keys)) expect(example).toMatch(new RegExp(`^# ${key}=.+$`, 'm'))
+})

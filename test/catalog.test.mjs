@@ -188,14 +188,14 @@ for (const c of cases) {
     }
 
     if (c.commandFix) {
-      test('documented opt-out command is only rendered in each supported shell', async () => {
+      test('documented opt-out actions are only rendered in each supported shell', async () => {
         const selected = [getRule(c)]
         const p = platform(c)
         const report = await scan(selected, p)
         for (const shell of ['bash', 'zsh', 'fish', 'powershell']) {
           const fix = await renderFix(report, selected, p, shell)
           expect(fix.split('\n').filter(line => line && !line.startsWith('#')))
-            .toEqual(c.fix.map(line => (shell === 'powershell' ? '& ' : '') + line))
+            .toEqual(c.shellFix?.[shell] ?? c.fix.map(line => (shell === 'powershell' ? '& ' : '') + line))
         }
       })
     }

@@ -68,6 +68,10 @@ notrack does not inspect, capture, or block network traffic, and cannot verify a
 
 On Windows, optional diagnostic data is reported separately from developer tools. Access failures or unrecognized settings produce `unknown`. On other platforms, JSON reports `windowsDiagnostics: null`.
 
+## Environment
+
+[`.env.example`](.env.example) documents optional scan controls and the tool-specific environment opt-outs recognized by the bundled rules. No credentials are required. notrack reads the inherited process environment and does not automatically load `.env` files; export the settings you choose in your shell before running the CLI.
+
 ## Testing
 
 From the checkout root, run both the automated suite and the package installation check:

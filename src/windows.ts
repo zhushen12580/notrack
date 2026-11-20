@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process'
+import { win32 } from 'node:path'
 import { promisify } from 'node:util'
 import type { Platform } from './platform.js'
 
@@ -19,7 +20,12 @@ type Runner = (file: string, args: string[], options: {timeout: number, shell: f
 
 export async function queryRegistry(key: string, valueName: string, run: Runner = execute): Promise<RegistryResult> {
   try {
-    const {stdout} = await run('reg.exe', ['query', key, '/v', valueName, '/reg:64'],
+    // Use the OS-provided system root, never executable lookup in cwd or PATH.
+    // A drive-rooted local path is required: \Windows and C:Windows depend on cwd.
+    const systemRoot = process.env.SystemRoot
+    if (!systemRoot || !/^[a-z]:[\\/]/i.test(systemRoot)) return {kind: 'error'}
+    const executable = win32.join(systemRoot, 'System32', 'reg.exe')
+    const {stdout} = await run(executable, ['query', key, '/v', valueName, '/reg:64'],
       {timeout: 3000, shell: false, encoding: 'utf8', maxBuffer: 65536, windowsHide: true})
     const rows = stdout.split(/\r?\n/).map(line => line.trim()).filter(line => line.split(/\s+/)[0]?.toLowerCase() === valueName.toLowerCase())
     if (rows.length !== 1) return {kind: 'error'}

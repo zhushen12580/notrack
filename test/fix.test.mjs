@@ -1,6 +1,6 @@
 import {spawnSync} from 'node:child_process'
-import {readdir, readFile} from 'node:fs/promises'
-import {join, dirname} from 'node:path'
+import {readdir, readFile, writeFile} from 'node:fs/promises'
+import {join, dirname, delimiter} from 'node:path'
 import {expect, test} from 'vitest'
 import {main} from '../dist/cli.js'
 import {withFixture, rule} from './fixtures.mjs'
@@ -54,6 +54,29 @@ test('bash preserves literal values and command arguments in child processes', a
     const result = spawnSync('bash', ['--noprofile', '--norc', '-c', output], {encoding: 'utf8', cwd: p.home})
     expect(result.status, result.stderr).toBe(0)
     expect(JSON.parse(result.stdout)).toEqual([value, ...args])
+  })
+})
+test.each([
+  ['bash', "export FLY_SEND_METRICS='false'"],
+  ['zsh', "export FLY_SEND_METRICS='false'"],
+  ['fish', "set -gx FLY_SEND_METRICS 'false'"],
+  ['powershell', "$env:FLY_SEND_METRICS = 'false'"],
+])('%s Fly suggestion overrides inherited FLY_SEND_METRICS=true', async (shell, assignment) => {
+  const rules = JSON.parse(await readFile(new URL('../data/tools.json', import.meta.url), 'utf8'))
+    .filter(rule => rule.id === 'flyctl')
+  await withFixture('empty', async p => {
+    p.env.FLY_SEND_METRICS = 'true'
+    await writeFile(join(p.env.PATH, 'flyctl'), '#!/bin/sh\nprintf "%s\\n" "$FLY_SEND_METRICS"\n', {mode: 0o755})
+    const output = await render(p, rules, shell)
+    expect(output.split('\n')).toContain(assignment)
+    if (shell === 'bash') {
+      const result = spawnSync('bash', ['--noprofile', '--norc', '-c', output + '\nprintf "%s\\n" "$FLY_SEND_METRICS"'], {
+        cwd: p.home, env: {...p.env, PATH: p.env.PATH + delimiter + process.env.PATH}, encoding: 'utf8', timeout: 10_000,
+      })
+      expect(result.status, result.stderr).toBe(0)
+      // Both the saved-preference command and later child processes see false.
+      expect(result.stdout).toBe('false\nfalse\n')
+    }
   })
 })
 test('shell quoting templates preserve quotes, backslashes and dollars', async () => {

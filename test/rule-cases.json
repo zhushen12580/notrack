@@ -538,10 +538,17 @@
     "off": {"env": {"FLY_SEND_METRICS": "false"}},
     "offStatus": "disabled",
     "offEvidence": ["env: FLY_SEND_METRICS"],
-    "fix": ["'flyctl' 'settings' 'analytics' 'disable'"],
+    "fix": ["export FLY_SEND_METRICS='false'", "'flyctl' 'settings' 'analytics' 'disable'"],
     "commandFix": true,
+    "shellFix": {
+      "bash": ["export FLY_SEND_METRICS='false'", "'flyctl' 'settings' 'analytics' 'disable'"],
+      "zsh": ["export FLY_SEND_METRICS='false'", "'flyctl' 'settings' 'analytics' 'disable'"],
+      "fish": ["set -gx FLY_SEND_METRICS 'false'", "'flyctl' 'settings' 'analytics' 'disable'"],
+      "powershell": ["$env:FLY_SEND_METRICS = 'false'", "& 'flyctl' 'settings' 'analytics' 'disable'"]
+    },
     "privateFiles": {"{home}/.fly/config.yml": "send_metrics: false\n# synthetic-private-value"},
     "examples": [
+      {"name": "an inherited metrics opt-in cannot be treated as disabled", "env": {"FLY_SEND_METRICS": "true"}, "status": "unknown", "evidence": ["env: FLY_SEND_METRICS"]},
       {"name": "credential-bearing YAML preferences are not read", "files": {"{home}/.fly/config.yml": "send_metrics: false\n# synthetic-private-value"}, "status": "unknown"},
       {"name": "an invalid metrics value remains private and unknown", "env": {"FLY_SEND_METRICS": "synthetic-private-value"}, "status": "unknown"},
       {"name": "the ambiguous fly alias alone is insufficient", "installed": false, "pathCommands": ["fly"], "absent": true},
