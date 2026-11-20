@@ -1,17 +1,30 @@
 # notrack
 
-Check local telemetry settings for developer tools and print opt-out snippets you can review before running. The bundled catalog covers 40 tools across AI coding agents, framework CLIs, cloud CLIs, package managers, editors, and other developer tools.
+A read-only telemetry check for 40 developer tools, with opt-out snippets for your shell.
 
-Scanning is read-only. notrack checks declared PATH commands, environment variables, and user configuration paths without running the detected developer tools. On Windows it also reads optional diagnostic data settings. It does not change files, environment variables, or the registry; `--fix` only prints suggestions.
+English | [简体中文](README.zh-CN.md)
+
+![notrack printing opt-out suggestions for detected tools on Linux](docs/images/opt-out-preview.png)
+
+Real Linux output, wrapped for readability. `--fix` only prints suggestions; you review and apply them yourself.
+
+## Features
+
+- **40 bundled tool rules**, including Claude Code, Codex, Gemini CLI, GitHub CLI, Next.js, .NET, Homebrew, and VS Code. Each rule names the telemetry it covers.
+- **Evidence with every result:** detection source, status, reasoning, and official documentation. Inconclusive settings stay `unknown`.
+- **Reviewable opt-outs** for bash, zsh, fish, and PowerShell, plus schema-versioned JSON for scripts.
+- **Local, read-only scanning:** no telemetry, account, or background service. Scans work offline after installation. Windows optional diagnostic data is reported separately.
 
 ## Installation
 
-Requires Node.js 20+ and npm. Clone this repository using the clone URL on its repository page, then enter the checkout's root directory. Run the following commands from that root:
+Quick start requires Node.js 20+ and npm. Clone this repository using the clone URL on its repository page, then enter the checkout's root directory. Run the following commands from that root:
 
 ```sh
 npm ci
 npm run build
 ```
+
+Then run `node dist/cli.js` to scan. With dependencies installed, `npm run dev` builds and runs the scan in one command.
 
 Installing dependencies may access the npm registry. Once installed and built, scanning and snippet generation work offline using the bundled rules. No account, credentials, or environment file is required. notrack has no telemetry, background service, or online rule updates.
 
@@ -49,6 +62,14 @@ node dist/cli.js --help
 
 Use `--color` or `--no-color` to control table colors, and `--version` to print the package version. By default, colors require a terminal and an unset `NO_COLOR` variable. Exit codes are 0 for a successful scan or snippet, 1 for a global failure such as unreadable rules, and 2 for invalid arguments. Enabled or unknown results still exit 0; diagnostics go to stderr.
 
+## How it works
+
+1. Find tools using only the PATH commands and user configuration paths declared in [the bundled rules](data/tools.json).
+2. Read inherited environment variables and declared JSON/JSONC settings. Apply documented opt-outs, defaults, and precedence within each rule's scope.
+3. Print a table, JSON report, or shell snippet. The scanner does not run detected tools, and snippet generation does not execute its output.
+
+Scanning is read-only: notrack does not change files, environment variables, or the registry. On Windows, it queries the registry for optional diagnostic data settings.
+
 ## Interpreting results
 
 Results are inferences from visible settings, within each rule's documented version and platform scope.
@@ -85,5 +106,9 @@ npm run test:audit
 The automated suite uses synthetic tool fixtures and simulated Windows registry reads. The package check builds a local tarball, installs it into a temporary directory inside the checkout, and verifies the installed help, version, and JSON commands with `npx --offline`. Installing its runtime dependencies may access the npm registry; execution checks run offline. The temporary installation is removed afterward.
 
 The dependency audit queries the npm registry for known vulnerabilities, including development dependencies, and fails if any are reported. It requires network access.
+
+## License
+
+[MIT](LICENSE).
 
 Built with Claude Code & Codex
