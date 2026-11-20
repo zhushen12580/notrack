@@ -367,5 +367,225 @@
       {"name": "hiding update notifications is not a telemetry opt-out", "env": {"STRAPI_DISABLE_UPDATE_NOTIFICATION": "true"}, "status": "unknown"},
       {"name": "project-only Strapi installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/strapi": "", "{home}/project/package.json": "{\"dependencies\":{\"@strapi/strapi\":\"5.0.0\"}}"}, "absent": true}
     ]
+  },
+  {
+    "id": "azure-cli",
+    "platform": "linux",
+    "command": "az",
+    "documentationUrl": "https://learn.microsoft.com/en-us/cli/azure/azure-cli-configuration",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["INI", "AZURE_CONFIG_DIR", "extensions", "server"],
+    "off": {"env": {"AZURE_CORE_COLLECT_TELEMETRY": "0"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: AZURE_CORE_COLLECT_TELEMETRY"],
+    "fix": ["export AZURE_CORE_COLLECT_TELEMETRY='0'"],
+    "privateFiles": {"{home}/.azure/config": "[core]\ncollect_telemetry=false\n", "{home}/.azure/msal_token_cache.json": "synthetic-private-value", "{home}/.azure/azureProfile.json": "synthetic-private-value"},
+    "examples": [
+      {"name": "INI preferences are not parsed or needed for the environment override", "env": {"AZURE_CONFIG_DIR": "/fixture/other", "AZURE_CORE_COLLECT_TELEMETRY": "0"}, "files": {"{home}/.azure/config": "[core]\ncollect_telemetry=true\n"}, "status": "disabled", "evidence": ["env: AZURE_CORE_COLLECT_TELEMETRY"]},
+      {"name": "an invalid telemetry boolean remains private and unknown", "env": {"AZURE_CORE_COLLECT_TELEMETRY": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "native Windows recognizes the Azure opt-out", "platform": "win32", "env": {"AZURE_CORE_COLLECT_TELEMETRY": "0"}, "status": "disabled", "detection": ["PATH: az"]},
+      {"name": "project Azure settings do not prove installation", "installed": false, "files": {"{home}/project/.azure/config": "[core]\ncollect_telemetry=false\n"}, "absent": true}
+    ]
+  },
+  {
+    "id": "azure-developer-cli",
+    "platform": "linux",
+    "command": "azd",
+    "documentationUrl": "https://github.com/Azure/azure-dev#data-collection",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["Cloud Shell", "notice", "AZURE_DEV_COLLECT_TELEMETRY", "templates"],
+    "off": {"env": {"AZURE_DEV_COLLECT_TELEMETRY": "no"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: AZURE_DEV_COLLECT_TELEMETRY"],
+    "fix": ["export AZURE_DEV_COLLECT_TELEMETRY='no'"],
+    "privateFiles": {"{home}/.azd/config.json": "{}", "{home}/.azd/auth.json": "synthetic-private-value"},
+    "examples": [
+      {"name": "false is not the azd documented no literal", "env": {"AZURE_DEV_COLLECT_TELEMETRY": "false"}, "status": "unknown"},
+      {"name": "Azure CLI opt-out does not also opt out azd", "env": {"AZURE_CORE_COLLECT_TELEMETRY": "0"}, "status": "unknown"},
+      {"name": "az alone does not detect Azure Developer CLI", "installed": false, "pathCommands": ["az"], "absent": true},
+      {"name": "project azure.yaml is outside the probe boundary", "installed": false, "files": {"{home}/project/azure.yaml": "name: fixture"}, "absent": true}
+    ]
+  },
+  {
+    "id": "google-cloud-cli",
+    "platform": "linux",
+    "command": "gcloud",
+    "documentationUrl": "https://docs.cloud.google.com/sdk/docs/usage-statistics",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["consent", "configuration", "CLOUDSDK_CONFIG", "service"],
+    "off": {"env": {"CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: CLOUDSDK_CORE_DISABLE_USAGE_REPORTING"],
+    "fix": ["export CLOUDSDK_CORE_DISABLE_USAGE_REPORTING='true'"],
+    "privateFiles": {"{xdgConfig}/gcloud/credentials.db": "synthetic-private-value", "{xdgConfig}/gcloud/application_default_credentials.json": "synthetic-private-value", "{xdgConfig}/gcloud/configurations/config_default": "[core]\ndisable_usage_reporting = true\n"},
+    "examples": [
+      {"name": "environment opt-out overrides an unread named configuration", "env": {"CLOUDSDK_CONFIG": "/fixture/other", "CLOUDSDK_ACTIVE_CONFIG_NAME": "synthetic-private-value", "CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"}, "status": "disabled", "evidence": ["env: CLOUDSDK_CORE_DISABLE_USAGE_REPORTING"]},
+      {"name": "an unclassified value does not establish installation consent", "env": {"CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "gcloud Windows command candidates are recognized", "platform": "win32", "env": {"CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"}, "status": "disabled", "detection": ["PATH: gcloud"]},
+      {"name": "project SDK configuration alone is outside the probe boundary", "installed": false, "files": {"{home}/project/.gcloud/configurations/config_default": "[core]\ndisable_usage_reporting=true\n"}, "absent": true}
+    ]
+  },
+  {
+    "id": "aws-sam-cli",
+    "platform": "linux",
+    "command": "sam",
+    "documentationUrl": "https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-telemetry.html",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["SAM_CLI_TELEMETRY", "metadata", "AWS CLI", "application"],
+    "off": {"env": {"SAM_CLI_TELEMETRY": "0"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: SAM_CLI_TELEMETRY"],
+    "fix": ["export SAM_CLI_TELEMETRY='0'"],
+    "privateFiles": {"{home}/.aws/credentials": "synthetic-private-value", "{home}/.aws/config": "synthetic-private-value"},
+    "examples": [
+      {"name": "AWS credentials and profile names do not change the telemetry override", "env": {"AWS_PROFILE": "synthetic-private-value", "SAM_CLI_TELEMETRY": "0"}, "status": "disabled", "evidence": ["env: SAM_CLI_TELEMETRY"]},
+      {"name": "an invalid flag cannot prove telemetry is enabled", "env": {"SAM_CLI_TELEMETRY": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "aws alone is not an AWS SAM installation", "installed": false, "pathCommands": ["aws"], "absent": true},
+      {"name": "project samconfig.toml and templates are not installation evidence", "installed": false, "files": {"{home}/project/samconfig.toml": "version = 0.1\n", "{home}/project/template.yaml": "AWSTemplateFormatVersion: '2010-09-09'"}, "absent": true}
+    ]
+  },
+  {
+    "id": "aws-cdk",
+    "platform": "linux",
+    "command": "cdk",
+    "documentationUrl": "https://docs.aws.amazon.com/cdk/v2/guide/cli-telemetry.html",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["2.1100.0", "context", "application usage", "CDK_DISABLE_CLI_TELEMETRY"],
+    "off": {"env": {"CDK_DISABLE_CLI_TELEMETRY": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: CDK_DISABLE_CLI_TELEMETRY"],
+    "fix": ["export CDK_DISABLE_CLI_TELEMETRY='true'"],
+    "privateFiles": {"{home}/.aws/credentials": "synthetic-private-value", "{home}/.cdk.json": "{\"context\":{\"cli-telemetry\":false}}"},
+    "examples": [
+      {"name": "global context alone cannot prove effective CLI telemetry settings", "files": {"{home}/.cdk.json": "{\"context\":{\"cli-telemetry\":false}}"}, "status": "unknown"},
+      {"name": "environment opt-out overrides enabled project context without reading it", "env": {"CDK_DISABLE_CLI_TELEMETRY": "true"}, "files": {"{home}/project/cdk.json": "{\"context\":{\"cli-telemetry\":true}}"}, "status": "disabled"},
+      {"name": "disabling CDK version checks does not disable CLI telemetry", "env": {"CDK_DISABLE_VERSION_CHECK": "true"}, "status": "unknown"},
+      {"name": "project-only CDK configuration and dependencies are not probed", "installed": false, "files": {"{home}/project/cdk.json": "{}", "{home}/project/node_modules/.bin/cdk": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "okteto",
+    "platform": "linux",
+    "command": "okteto",
+    "documentationUrl": "https://www.okteto.com/docs/reference/okteto-cli/#analytics",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["analytics.json", "OKTETO_HOME", "admin", "version"],
+    "off": {"files": {"{home}/.okteto/analytics.json": "{\"enabled\":false}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "configDetection": "{home}/.okteto/analytics.json",
+    "fix": ["'okteto' 'analytics' '--disable'"],
+    "commandFix": true,
+    "privateFiles": {"{home}/.okteto/.token.json": "synthetic-private-value", "{home}/.kube/config": "synthetic-private-value"},
+    "examples": [
+      {"name": "unconfirmed custom home prevents interpreting the saved analytics preference", "env": {"OKTETO_HOME": "/fixture/other"}, "files": {"{home}/.okteto/analytics.json": "{\"enabled\":false}"}, "status": "unknown"},
+      {"name": "damaged existence-only analytics config stays private and unknown", "files": {"{home}/.okteto/analytics.json": "{synthetic-private-value"}, "status": "unknown"},
+      {"name": "project okteto YAML is not user-level installation evidence", "installed": false, "files": {"{home}/project/okteto.yml": "name: fixture"}, "absent": true}
+    ]
+  },
+  {
+    "id": "garden",
+    "platform": "linux",
+    "command": "garden",
+    "documentationUrl": "https://docs.garden.io/misc/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["GARDEN_DISABLE_ANALYTICS", "persisted", "project", "workload"],
+    "off": {"env": {"GARDEN_DISABLE_ANALYTICS": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: GARDEN_DISABLE_ANALYTICS"],
+    "fix": ["export GARDEN_DISABLE_ANALYTICS='true'"],
+    "privateFiles": {"{home}/.garden/global-config.yml": "synthetic-private-value", "{home}/.kube/config": "synthetic-private-value"},
+    "examples": [
+      {"name": "zero does not establish a persisted Garden analytics preference", "env": {"GARDEN_DISABLE_ANALYTICS": "0"}, "status": "unknown"},
+      {"name": "Garden native Windows recognizes the analytics opt-out", "platform": "win32", "env": {"GARDEN_DISABLE_ANALYTICS": "true"}, "status": "disabled", "detection": ["PATH: garden"]},
+      {"name": "project garden YAML and dependencies are not probed", "installed": false, "files": {"{home}/project/garden.yml": "kind: Project\nname: fixture", "{home}/project/node_modules/.bin/garden": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "devpod",
+    "platform": "linux",
+    "command": "devpod",
+    "documentationUrl": "https://devpod.sh/docs/other-topics/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["DEVPOD_DISABLE_TELEMETRY", "context", "Desktop", "workload"],
+    "off": {"env": {"DEVPOD_DISABLE_TELEMETRY": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: DEVPOD_DISABLE_TELEMETRY"],
+    "fix": ["export DEVPOD_DISABLE_TELEMETRY='true'"],
+    "privateFiles": {"{home}/.devpod/config.yaml": "synthetic-private-value", "{home}/.aws/credentials": "synthetic-private-value"},
+    "examples": [
+      {"name": "context selection does not weaken the global environment opt-out", "env": {"DEVPOD_CONTEXT": "synthetic-private-value", "DEVPOD_DISABLE_TELEMETRY": "true"}, "status": "disabled", "evidence": ["env: DEVPOD_DISABLE_TELEMETRY"]},
+      {"name": "an invalid DevPod flag is not an enabled signal", "env": {"DEVPOD_DISABLE_TELEMETRY": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "project devcontainer metadata does not prove CLI installation", "installed": false, "files": {"{home}/project/.devcontainer/devcontainer.json": "{\"image\":\"fixture\"}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "flyctl",
+    "platform": "linux",
+    "command": "flyctl",
+    "documentationUrl": "https://fly.io/docs/flyctl/settings-analytics/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["FLY_SEND_METRICS", "YAML", "credentials", "synthetics"],
+    "off": {"env": {"FLY_SEND_METRICS": "false"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: FLY_SEND_METRICS"],
+    "fix": ["'flyctl' 'settings' 'analytics' 'disable'"],
+    "commandFix": true,
+    "privateFiles": {"{home}/.fly/config.yml": "send_metrics: false\n# synthetic-private-value"},
+    "examples": [
+      {"name": "credential-bearing YAML preferences are not read", "files": {"{home}/.fly/config.yml": "send_metrics: false\n# synthetic-private-value"}, "status": "unknown"},
+      {"name": "an invalid metrics value remains private and unknown", "env": {"FLY_SEND_METRICS": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "the ambiguous fly alias alone is insufficient", "installed": false, "pathCommands": ["fly"], "absent": true},
+      {"name": "project fly.toml does not prove CLI installation", "installed": false, "files": {"{home}/project/fly.toml": "app = 'fixture'"}, "absent": true}
+    ]
+  },
+  {
+    "id": "supabase-cli",
+    "platform": "linux",
+    "command": "supabase",
+    "documentationUrl": "https://supabase.com/docs/guides/local-development/cli/getting-started",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["generation", "SUPABASE_HOME", "PostHog", "Sentry"],
+    "off": {"env": {"SUPABASE_TELEMETRY_DISABLED": "1"}, "files": {"{home}/.supabase/telemetry.json": "{\"enabled\":false}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["version", "supabase telemetry disable", "SUPABASE_TELEMETRY_DISABLED=1", "DO_NOT_TRACK=1", "Sentry"],
+    "manual": true,
+    "privateFiles": {"{home}/.supabase/access-token": "synthetic-private-value", "{home}/.supabase/telemetry.json": "{}"},
+    "examples": [
+      {"name": "DNT cannot establish telemetry behavior across unconfirmed CLI generations", "env": {"DO_NOT_TRACK": "1", "SUPABASE_TELEMETRY_DISABLED": "1"}, "status": "unknown"},
+      {"name": "saved analytics preference does not prove active home or CLI version", "env": {"SUPABASE_HOME": "/fixture/other"}, "files": {"{home}/.supabase/telemetry.json": "{\"enabled\":false}"}, "status": "unknown"},
+      {"name": "project Supabase config and dependencies are outside the probe boundary", "installed": false, "files": {"{home}/project/supabase/config.toml": "project_id = 'fixture'", "{home}/project/node_modules/.bin/supabase": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "firebase-cli",
+    "platform": "linux",
+    "command": "firebase",
+    "documentationUrl": "https://github.com/firebase/firebase-tools/blob/main/src/commands/login.ts",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["consent", "credentials", "Emulator Suite", "Gemini"],
+    "off": {"files": {"{xdgConfig}/configstore/firebase-tools.json": "{\"usage\":false}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["firebase logout", "firebase login", "decline", "Emulator Suite", "Gemini"],
+    "manual": true,
+    "privateFiles": {"{xdgConfig}/configstore/firebase-tools.json": "{\"usage\":false,\"fixture\":\"synthetic-private-value\"}"},
+    "examples": [
+      {"name": "a saved opt-in in the credential container is also unread", "files": {"{xdgConfig}/configstore/firebase-tools.json": "{\"usage\":true,\"fixture\":\"synthetic-private-value\"}"}, "status": "unknown"},
+      {"name": "Google Cloud opt-out does not disable Firebase CLI consent", "env": {"CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"}, "status": "unknown"},
+      {"name": "project Firebase config does not establish CLI installation", "installed": false, "files": {"{home}/project/firebase.json": "{}", "{home}/project/.firebaserc": "{}", "{home}/project/node_modules/.bin/firebase": ""}, "absent": true}
+    ]
   }
 ]

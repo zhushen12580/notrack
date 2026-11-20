@@ -352,5 +352,197 @@
     "actions": [
       {"type": "env", "key": "STRAPI_TELEMETRY_DISABLED", "value": "true"}
     ]
+  },
+  {
+    "id": "azure-cli",
+    "name": "Azure CLI (client telemetry)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["az"],
+    "configPaths": [],
+    "versionScope": "Official Azure CLI configuration contract checked 2026-11-21: AZURE_CORE_COLLECT_TELEMETRY=0 disables client telemetry. Environment variables override saved INI settings, including a custom AZURE_CONFIG_DIR; this scan does not read that configuration or credentials. Stored preferences and installed release are not established by PATH, so the baseline is unknown. This scope excludes independent extensions and server-side Azure request logging. It does not configure the separate azd CLI.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://learn.microsoft.com/en-us/cli/azure/azure-cli-configuration",
+    "settings": [
+      {"source": "env", "key": "AZURE_CORE_COLLECT_TELEMETRY", "valueType": "string", "disabled": "0"}
+    ],
+    "actions": [
+      {"type": "env", "key": "AZURE_CORE_COLLECT_TELEMETRY", "value": "0"}
+    ]
+  },
+  {
+    "id": "azure-developer-cli",
+    "name": "Azure Developer CLI (usage telemetry)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["azd"],
+    "configPaths": [],
+    "versionScope": "Official Azure Developer CLI contract checked 2026-11-21: AZURE_DEV_COLLECT_TELEMETRY=no disables telemetry initialization. The implementation checks exactly no; false is not this opt-out. In Cloud Shell collection also depends on whether the notice has been shown, which this scan does not inspect; absent overrides are unknown. Only azd is probed, independently of az. This scope excludes provisioning templates, deployed applications, Azure Verified Modules and service-side telemetry. Guard: https://github.com/Azure/azure-dev/blob/main/cli/azd/internal/telemetry/telemetry.go",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://github.com/Azure/azure-dev#data-collection",
+    "settings": [
+      {"source": "env", "key": "AZURE_DEV_COLLECT_TELEMETRY", "valueType": "string", "disabled": "no"}
+    ],
+    "actions": [
+      {"type": "env", "key": "AZURE_DEV_COLLECT_TELEMETRY", "value": "no"}
+    ]
+  },
+  {
+    "id": "google-cloud-cli",
+    "name": "Google Cloud CLI (usage statistics)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["gcloud"],
+    "configPaths": [],
+    "versionScope": "Official gcloud usage statistics contract checked 2026-11-21: CLOUDSDK_CORE_DISABLE_USAGE_REPORTING=true sets core/disable_usage_reporting and overrides saved property values. Installation consent, the active named configuration and CLOUDSDK_CONFIG are not read, so the baseline is unknown even though normal installation is opt-in. No credential databases or application-default credentials are read. This scope concerns gcloud usage statistics, excluding service-side logs, application SDKs and separate tools such as Firebase. Environment mapping and precedence: https://docs.cloud.google.com/sdk/docs/properties",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.cloud.google.com/sdk/docs/usage-statistics",
+    "settings": [
+      {"source": "env", "key": "CLOUDSDK_CORE_DISABLE_USAGE_REPORTING", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "CLOUDSDK_CORE_DISABLE_USAGE_REPORTING", "value": "true"}
+    ]
+  },
+  {
+    "id": "aws-sam-cli",
+    "name": "AWS SAM CLI (usage telemetry)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["sam"],
+    "configPaths": [],
+    "versionScope": "Official AWS SAM CLI telemetry contract checked 2026-11-21: SAM_CLI_TELEMETRY=0 opts out on Linux, macOS and Windows. The local SAM metadata preference and installed release are not inspected, so absent overrides are unknown. Only the SAM CLI command is probed; the separate AWS CLI, shared AWS credentials and project samconfig.toml are not installation evidence. This scope concerns SAM CLI usage/error telemetry, excluding deployed application telemetry, other AWS developer tools and service-side request logs.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-telemetry.html",
+    "settings": [
+      {"source": "env", "key": "SAM_CLI_TELEMETRY", "valueType": "string", "disabled": "0"}
+    ],
+    "actions": [
+      {"type": "env", "key": "SAM_CLI_TELEMETRY", "value": "0"}
+    ]
+  },
+  {
+    "id": "aws-cdk",
+    "name": "AWS CDK (CLI telemetry)",
+    "category": "infrastructure-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["cdk"],
+    "configPaths": [],
+    "versionScope": "Official AWS CDK CLI telemetry contract checked 2026-11-21: CLI telemetry starts in 2.1100.0; earlier releases do not collect this CLI telemetry. CDK_DISABLE_CLI_TELEMETRY=true disables it regardless of context values. The installed version, global ~/.cdk.json and higher-priority project/command context are not inspected, so the baseline is unknown and a saved global false alone cannot prove opt-out. This scope excludes the separate application usage reporting in synthesized stacks (analyticsReporting/version reporting), CDK libraries, deployed workloads and other AWS tools. Disabling CLI version checks is not a telemetry opt-out.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.aws.amazon.com/cdk/v2/guide/cli-telemetry.html",
+    "settings": [
+      {"source": "env", "key": "CDK_DISABLE_CLI_TELEMETRY", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "CDK_DISABLE_CLI_TELEMETRY", "value": "true"}
+    ]
+  },
+  {
+    "id": "okteto",
+    "name": "Okteto CLI (usage analytics)",
+    "category": "infrastructure-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["okteto"],
+    "configPaths": ["{home}/.okteto/analytics.json"],
+    "versionScope": "Official Okteto CLI analytics command checked 2026-11-21: okteto analytics --disable saves the local opt-out. The dedicated analytics.json is existence evidence only; installed version, OKTETO_HOME, active context and admin telemetry policy are not confirmed, so saved preferences alone remain unknown. Credentials, Kubernetes config and project manifests are not read. This scope concerns CLI usage analytics, excluding workloads and the server telemetry job; an admin can disable instance telemetry separately. Command: https://github.com/okteto/okteto/blob/master/cmd/analytics.go ; path: https://github.com/okteto/okteto/blob/master/pkg/config/config.go",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://www.okteto.com/docs/reference/okteto-cli/#analytics",
+    "settings": [],
+    "actions": [
+      {"type": "command", "program": "okteto", "args": ["analytics", "--disable"]}
+    ]
+  },
+  {
+    "id": "garden",
+    "name": "Garden (CLI analytics)",
+    "category": "infrastructure-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["garden"],
+    "configPaths": [],
+    "versionScope": "Official Garden CLI telemetry contract checked 2026-11-21: GARDEN_DISABLE_ANALYTICS=true overrides persisted analytics preferences and cloud-user consent. Stored user configuration, cloud authentication and project files are not read, so absent overrides give unknown. Only garden on PATH is probed. This scope covers Garden CLI analytics, excluding independent workload analytics and service-side logs. Guard: https://github.com/garden-io/garden/blob/main/core/src/analytics/analytics.ts ; supported OS installation: https://docs.garden.io/guides/installation",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.garden.io/misc/telemetry",
+    "settings": [
+      {"source": "env", "key": "GARDEN_DISABLE_ANALYTICS", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "GARDEN_DISABLE_ANALYTICS", "value": "true"}
+    ]
+  },
+  {
+    "id": "devpod",
+    "name": "DevPod (CLI telemetry)",
+    "category": "infrastructure-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["devpod"],
+    "configPaths": [],
+    "versionScope": "Official DevPod CLI telemetry contract checked 2026-11-21: DEVPOD_DISABLE_TELEMETRY=true is the environment opt-out, independently of per-context TELEMETRY=false preferences. The active context and its saved settings are not read, so absent overrides give unknown. Only the PATH-visible devpod CLI is detected. This scope concerns CLI events, including CLI invocations made by DevPod Desktop, excluding independent Desktop UI telemetry, providers, IDE extensions and workload analytics. Project devcontainer files and provider credentials are not read.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://devpod.sh/docs/other-topics/telemetry",
+    "settings": [
+      {"source": "env", "key": "DEVPOD_DISABLE_TELEMETRY", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "DEVPOD_DISABLE_TELEMETRY", "value": "true"}
+    ]
+  },
+  {
+    "id": "flyctl",
+    "name": "Fly CLI (usage analytics)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["flyctl"],
+    "configPaths": [],
+    "versionScope": "Official Fly CLI analytics contract checked 2026-11-21: flyctl settings analytics disable saves the preference; FLY_SEND_METRICS=false overrides the saved send_metrics value. The YAML config also carries credentials and is never read, so absent environment overrides give unknown. Probe only flyctl, excluding the ambiguous fly alias and project fly.toml. This scope concerns anonymized CLI usage analytics, excluding the separate synthetics agent, application metrics and service-side logs. Environment guard: https://github.com/superfly/flyctl/blob/master/internal/config/config.go ; command: https://github.com/superfly/flyctl/blob/master/internal/command/settings/analytics.go",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://fly.io/docs/flyctl/settings-analytics/",
+    "settings": [
+      {"source": "env", "key": "FLY_SEND_METRICS", "valueType": "string", "disabled": "false"}
+    ],
+    "actions": [
+      {"type": "command", "program": "flyctl", "args": ["settings", "analytics", "disable"]}
+    ]
+  },
+  {
+    "id": "supabase-cli",
+    "name": "Supabase CLI (usage analytics)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["supabase"],
+    "configPaths": [],
+    "versionScope": "Official Supabase CLI telemetry documentation checked 2026-11-21. The current TypeScript generation documents supabase telemetry disable, SUPABASE_TELEMETRY_DISABLED=1 and DO_NOT_TRACK=1. A PATH-visible supabase does not establish the installed generation, version, effective SUPABASE_HOME or telemetry systems; legacy Go releases use a different implementation. Therefore neither environment flags nor saved analytics preferences prove a cross-version opt-out, and unconditional DNT support is not asserted. Credentials and project config are not read. This scope concerns CLI usage analytics (PostHog); Sentry monitoring and tracing require separate review. Current design: https://github.com/supabase/cli/blob/develop/apps/cli/docs/analytics.md",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://supabase.com/docs/guides/local-development/cli/getting-started",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm the installed Supabase CLI generation and version supports the documented telemetry controls, then run supabase telemetry disable or set SUPABASE_TELEMETRY_DISABLED=1 (current CLI also documents DO_NOT_TRACK=1). Check the effective SUPABASE_HOME and telemetry status. Review Sentry monitoring and tracing separately; these suggestions concern CLI usage analytics."}
+    ]
+  },
+  {
+    "id": "firebase-cli",
+    "name": "Firebase CLI (usage and error reporting consent)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["firebase"],
+    "configPaths": [],
+    "versionScope": "Official Firebase CLI login consent flow checked 2026-11-21. The usage preference shares a configstore file with authentication credentials, which this scan neither probes nor reads. Existing consent and installed release cannot be inferred from PATH, so the status is unknown. The documented preference reset requires logging out and logging in again; it is only suggested as a manual step. This scope covers the CLI and Emulator Suite usage/error reporting prompt, excluding the separate Gemini consent, VS Code integration and application Analytics SDKs. Usage guard: https://github.com/firebase/firebase-tools/blob/main/src/track.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://github.com/firebase/firebase-tools/blob/main/src/commands/login.ts",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "When ready to renew your Firebase CLI login, run firebase logout followed by firebase login and decline the CLI and Emulator Suite usage and error reporting consent prompt. The shared credentials file is not inspected. Review the separate Gemini consent, VS Code integration and application Analytics settings independently."}
+    ]
   }
 ]

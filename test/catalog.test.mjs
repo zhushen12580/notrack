@@ -50,14 +50,18 @@ function privateReport(report) {
   for (const text of ['/fixture/', 'C:\\\\fixture', 'synthetic-private-value']) expect(output).not.toContain(text)
 }
 
-test('catalog has at least 19 tools, including 11 framework/build additions, and one independent case per rule', () => {
+test('catalog has at least 30 tools, including cloud/infrastructure additions, and one independent case per rule', () => {
   expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
     'claude-code', 'codex', 'gemini-cli', 'gh', 'nextjs', 'dotnet', 'homebrew', 'vscode',
   ]))
-  expect(rules.length).toBeGreaterThanOrEqual(19)
+  expect(rules.length).toBeGreaterThanOrEqual(30)
   expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
     'nuxt', 'astro', 'angular-cli', 'gatsby', 'nx', 'turborepo',
     'vercel-cli', 'netlify-cli', 'storybook', 'expo', 'strapi',
+  ]))
+  expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
+    'azure-cli', 'azure-developer-cli', 'google-cloud-cli', 'aws-sam-cli', 'aws-cdk',
+    'okteto', 'garden', 'devpod', 'flyctl', 'supabase-cli', 'firebase-cli',
   ]))
   expect(rules.map(rule => rule.id).sort()).toEqual(cases.map(c => c.id).sort())
   expect(new Set(cases.map(c => c.id)).size).toBe(cases.length)
@@ -109,7 +113,8 @@ for (const c of cases) {
       } else {
         const fix = await renderFix(report, selected, p, 'bash')
         for (const text of c.fix) expect(fix).toContain(text)
-        expect(fix.split('\n').every(line => !line || line.startsWith('#'))).toBe(true)
+        expect(fix.split('\n').filter(line => line && !line.startsWith('#')))
+          .toEqual(c.manual ? [] : c.fix)
       }
       if (c.configDetection) {
         const configOnly = await scan(selected, platform(c, c.off, false))
@@ -117,6 +122,35 @@ for (const c of cases) {
         expect(configOnly.tools[0].status).toBe(c.offStatus)
       }
     })
+
+    if (c.privateFiles) {
+      test('cloud credentials are neither read nor treated as installation evidence', async () => {
+        const p = platform(c, {files: c.privateFiles})
+        const readFile = p.readFile
+        const reads = []
+        p.readFile = async (...args) => { reads.push(args[0]); return readFile(...args) }
+        const report = await scan(rules, p)
+        expect(report.tools.map(tool => tool.id)).toEqual([c.id])
+        expect(report.tools[0].status).toBe(c.defaultStatus)
+        await renderFix(report, rules, p, 'bash')
+        expect(reads).toEqual([])
+        privateReport(report)
+        expect((await scan(rules, platform(c, {files: c.privateFiles}, false))).tools).toEqual([])
+      })
+    }
+
+    if (c.commandFix) {
+      test('documented opt-out command is only rendered in each supported shell', async () => {
+        const selected = [getRule(c)]
+        const p = platform(c)
+        const report = await scan(selected, p)
+        for (const shell of ['bash', 'zsh', 'fish', 'powershell']) {
+          const fix = await renderFix(report, selected, p, shell)
+          expect(fix.split('\n').filter(line => line && !line.startsWith('#')))
+            .toEqual(c.fix.map(line => (shell === 'powershell' ? '& ' : '') + line))
+        }
+      })
+    }
 
     test('DNT affects only the documented telemetry scope and exact value 1', async () => {
       const selected = [getRule(c)]
