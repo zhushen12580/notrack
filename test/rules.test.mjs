@@ -18,3 +18,26 @@ test.each([
 ])('rejects malformed rule %j', patch => {
   expect(() => validateRules([rule('a', patch)])).toThrow()
 })
+
+test.each([
+  {precedence: {order: [0], documentationUrl: 'https://example.com'}},
+  {precedence: {order: ['dnt'], documentationUrl: 'https://example.com'}},
+  {precedence: {order: [], documentationUrl: 'http://example.com'}},
+  {applicability: {documentationUrl: 'https://example.com', conditions: []}},
+  {applicability: {documentationUrl: 'https://example.com', conditions: [{source: 'env', key: 'BAD;', values: ['2']}]}},
+  {applicability: {documentationUrl: 'https://example.com', conditions: [{source: 'config', path: '{home}/undeclared', field: ['version'], values: ['2']}]}},
+])('rejects invalid precedence or applicability %j', patch => {
+  expect(() => validateRules([rule('a', patch)])).toThrow()
+})
+
+test('accepts documented complete precedence and local applicability', () => {
+  const r = rule('a', {supportsDoNotTrack: true,
+    settings: [{source: 'env', key: 'OPT_OUT', valueType: 'string', enabled: '0', disabled: '1'}],
+    precedence: {order: ['dnt', 0], documentationUrl: 'https://example.com/order'},
+    applicability: {documentationUrl: 'https://example.com/scope', conditions: [{source: 'env', key: 'VERSION', values: ['2']}]},
+  })
+  expect(validateRules([r])).toEqual([r])
+  for (const order of [[0, 0], [0], ['dnt', 2], ['0', 'dnt']]) {
+    expect(() => validateRules([{...r, precedence: {...r.precedence, order}}])).toThrow()
+  }
+})

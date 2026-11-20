@@ -84,3 +84,64 @@ test('missing configs do not override PATH detection and unsupported platforms a
     expect((await scan([{...r, defaultStatus: 'unknown'}], p)).tools[0].status).toBe('unknown')
   })
 })
+
+const envSetting = {source: 'env', key: 'OPT_OUT', valueType: 'string', enabled: '0', disabled: '1'}
+const brokenSetting = {source: 'config', path: '{home}/broken.json', field: ['telemetry'], valueType: 'boolean', enabled: true, disabled: false}
+const documented = 'https://example.com/precedence'
+test('DNT is exact, opt-in per rule, and participates in documented precedence', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {supportsDoNotTrack: true, settings: [envSetting]})
+    for (const value of [undefined, '0', 'true', '1 ', '']) {
+      expect((await scan([r], {...p, env: {...p.env, DO_NOT_TRACK: value}})).tools[0].status).toBe('default_on')
+    }
+    const platform = {...p, env: {...p.env, DO_NOT_TRACK: '1', OPT_OUT: '0'}}
+    expect((await scan([r], platform)).tools[0].status).toBe('unknown')
+    for (const [order, status] of [[[0, 'dnt'], 'enabled'], [['dnt', 0], 'disabled']]) {
+      expect((await scan([{...r, precedence: {order, documentationUrl: documented}}], platform)).tools[0].status).toBe(status)
+    }
+  })
+})
+
+test('documented order short circuits lower invalid or unreadable settings only', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {configPaths: ['{home}/broken.json'], settings: [envSetting, brokenSetting]})
+    const platform = {...p, env: {...p.env, OPT_OUT: '1'}, readFile: async () => { throw Error('private') }}
+    expect((await scan([r], platform)).tools[0].status).toBe('unknown')
+    const ordered = {...r, precedence: {order: [0, 1], documentationUrl: documented}}
+    let reads = 0
+    expect((await scan([ordered], {...platform, readFile: async () => { reads++; throw Error() }})).tools[0].status).toBe('disabled')
+    expect(reads).toBe(0)
+    expect((await scan([ordered], p)).tools[0].status).toBe('unknown')
+    const consistent = {...r, settings: [envSetting, {...envSetting, key: 'SECOND'}]}
+    expect((await scan([consistent], {...p, env: {...p.env, OPT_OUT: '1', SECOND: '1'}})).tools[0].status).toBe('disabled')
+  })
+})
+
+test('version and channel gates require declared local facts before settings or defaults apply', async () => {
+  await withFixture('mixed', async p => {
+    const applicability = {documentationUrl: documented, conditions: [
+      {source: 'env', key: 'TOOL_VERSION', values: ['2.0']},
+      {source: 'config', path: '{home}/config.jsonc', field: ['channel'], values: ['stable']},
+    ]}
+    const r = rule('a', {defaultStatus: 'off', supportsDoNotTrack: true, configPaths: ['{home}/config.jsonc'], applicability})
+    for (const version of [undefined, '1.0', '2.0']) {
+      const result = (await scan([r], {...p, env: {...p.env, TOOL_VERSION: version, DO_NOT_TRACK: '1'}})).tools[0]
+      expect(result.status).toBe('unknown')
+      expect(result.evidence).toEqual(['version or channel applicability unconfirmed'])
+    }
+    await writeFile(join(p.home, 'config.jsonc'), '{"channel":"stable"}')
+    expect((await scan([r], {...p, env: {...p.env, TOOL_VERSION: '2.0'}})).tools[0].status).toBe('disabled')
+    expect((await scan([r], {...p, env: {...p.env, TOOL_VERSION: '2.0'}, readFile: async () => {throw Error()} })).tools[0].status).toBe('unknown')
+  })
+})
+
+test('applicability interface lets action rendering reject unresolved scope', async () => {
+  const {isApplicable} = await import('../dist/scan.js')
+  await withFixture('empty', async p => {
+    const r = rule('a', {applicability: {documentationUrl: documented,
+      conditions: [{source: 'env', key: 'VERSION', values: ['2']}]}})
+    expect(await isApplicable(r, p)).toBe(false)
+    expect(await isApplicable(r, {...p, env: {VERSION: '2'}})).toBe(true)
+    expect(await isApplicable(rule('a'), p)).toBe(true)
+  })
+})

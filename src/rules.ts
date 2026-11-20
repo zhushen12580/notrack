@@ -19,6 +19,13 @@ export interface Action {
   platforms?: string[]
   shells?: string[]
 }
+export interface LocalCondition {
+  source: 'env' | 'config'
+  key?: string
+  path?: string
+  field?: string[]
+  values: Scalar[]
+}
 export interface Rule {
   id: string
   name: string
@@ -26,7 +33,11 @@ export interface Rule {
   platforms: string[]
   commands: string[]
   configPaths: string[]
+  // Human-readable scope; machine-sensitive scopes must also declare applicability.
   versionScope: string
+  applicability?: {documentationUrl: string, conditions: LocalCondition[]}
+  // Complete highest-first order, including DNT when supported.
+  precedence?: {documentationUrl: string, order: (number | 'dnt')[]}
   defaultStatus: 'on' | 'off' | 'unknown'
   supportsDoNotTrack: boolean
   documentationUrl: string
@@ -43,6 +54,11 @@ const template = (v: unknown) => text(v) && /^\{(home|xdgConfig)\}\//.test(v) &&
   v.slice(v.indexOf('/') + 1).split('/').every(p => text(p) && p !== '.' && p !== '..' && !/[\\:{}]/.test(p))
 function requireValid(ok: unknown): asserts ok {
   if (!ok) throw new Error('Invalid telemetry rule')
+}
+function documentation(value: unknown): boolean {
+  if (!text(value)) return false
+  try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password }
+  catch { return false }
 }
 export function validateRules(input: unknown): Rule[] {
   requireValid(Array.isArray(input))
@@ -66,6 +82,24 @@ export function validateRules(input: unknown): Rule[] {
       if (s.source === 'env') requireValid(key(s.key))
       else requireValid(template(s.path) && r.configPaths.includes(s.path) &&
         list(s.field, text) && s.field.length > 0 && !s.field.some((k: string) => ['__proto__', 'constructor', 'prototype'].includes(k)))
+    }
+    if (r.precedence !== undefined) {
+      const order = r.precedence.order
+      requireValid(documentation(r.precedence.documentationUrl) && Array.isArray(order))
+      const expected = r.settings.map((_: unknown, i: number) => i) as (number | string)[]
+      if (r.supportsDoNotTrack) expected.push('dnt')
+      requireValid(order.length === expected.length && new Set(order).size === order.length &&
+        order.every((item: unknown) => expected.includes(item as number | string)))
+    }
+    if (r.applicability !== undefined) {
+      requireValid(documentation(r.applicability.documentationUrl) && Array.isArray(r.applicability.conditions) && r.applicability.conditions.length > 0)
+      for (const c of r.applicability.conditions) {
+        requireValid(c && ['env', 'config'].includes(c.source) && list(c.values, v =>
+          typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v)) || text(v)) && c.values.length > 0)
+        if (c.source === 'env') requireValid(key(c.key))
+        else requireValid(template(c.path) && r.configPaths.includes(c.path) && list(c.field, text) && c.field.length > 0 &&
+          !c.field.some((k: string) => ['__proto__', 'constructor', 'prototype'].includes(k)))
+      }
     }
     requireValid(Array.isArray(r.actions))
     for (const a of r.actions) {

@@ -120,3 +120,14 @@ test.each([
     expect(output).not.toContain('fixture-absent')
   })
 })
+
+test('dnt fixture reports exact support, status and safe evidence', () => {
+  const result = spawnSync(process.execPath, ['test/run-fixture.mjs', 'dnt', '--', '--json'], {encoding: 'utf8'})
+  expect(result.status, result.stderr).toBe(0)
+  const report = JSON.parse(result.stdout)
+  expect(report.doNotTrack).toBe(true)
+  expect(report.tools.map(t => [t.id, t.supportsDoNotTrack, t.status, t.evidence])).toEqual([
+    ['fixture-dnt', true, 'disabled', ['env: DO_NOT_TRACK']],
+    ['fixture-env', false, 'default_on', ['default: on']],
+  ])
+})

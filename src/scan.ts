@@ -27,6 +27,26 @@ async function regular(path: string, p: Platform, executable = false): Promise<b
     return true
   } catch { return false }
 }
+// Shared with future action rendering: false forbids executable suggestions.
+export async function isApplicable(r: Rule, p: Platform): Promise<boolean> {
+  for (const c of r.applicability?.conditions ?? []) {
+    let value: unknown
+    if (c.source === 'env') value = environment(p, c.key!)
+    else {
+      try {
+        const errors: ParseError[] = []
+        value = parse(await p.readFile(configPath(c.path!, p), 'utf8'), errors)
+        if (errors.length || !value || typeof value !== 'object' || Array.isArray(value)) return false
+        for (const field of c.field!) {
+          value = value !== null && typeof value === 'object' && Object.hasOwn(value, field)
+            ? (value as Record<string, unknown>)[field] : undefined
+        }
+      } catch { return false }
+    }
+    if (!c.values.some(allowed => allowed === value)) return false
+  }
+  return true
+}
 export async function scan(rules: Rule[], p: Platform): Promise<Report> {
   const report: Report = emptyReport(p)
   const paths = p.platform === 'win32' ? win32 : posix
@@ -50,7 +70,17 @@ export async function scan(rules: Rule[], p: Platform): Promise<Report> {
     }
     if (!detection.length) continue
     const outcomes: {status: Status, evidence: string}[] = []
-    for (const s of r.settings) {
+    const applicable = await isApplicable(r, p)
+    const order = r.precedence?.order ?? [
+      ...r.settings.map((_, i) => i), ...(r.supportsDoNotTrack ? ['dnt' as const] : []),
+    ]
+    for (const index of applicable ? order : []) {
+      if (r.precedence && outcomes.length) break
+      if (index === 'dnt') {
+        if (environment(p, 'DO_NOT_TRACK') === '1') outcomes.push({status: 'disabled', evidence: 'env: DO_NOT_TRACK'})
+        continue
+      }
+      const s = r.settings[index]
       let value: unknown
       const evidence = s.source === 'env' ? 'env: ' + s.key : 'config: ' + s.path + ' / ' + s.field!.join('.')
       if (s.source === 'env') value = environment(p, s.key!)
@@ -81,6 +111,10 @@ export async function scan(rules: Rule[], p: Platform): Promise<Report> {
       status = outcomes.every(o => o.status === outcomes[0].status) ? outcomes[0].status : 'unknown'
       evidence = outcomes.map(o => o.evidence)
       if (new Set(outcomes.map(o => o.status)).size > 1) evidence.push('setting precedence unconfirmed')
+    }
+    if (!applicable) {
+      status = 'unknown'
+      evidence = ['version or channel applicability unconfirmed']
     }
     const tool: ToolResult = {id: r.id, name: r.name, detection, status, evidence,
       supportsDoNotTrack: r.supportsDoNotTrack, documentationUrl: r.documentationUrl}

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export async function withFixture(scenario, run) {
-  if (!['empty', 'mixed'].includes(scenario)) {
+  if (!['empty', 'mixed', 'dnt'].includes(scenario)) {
     throw new Error(`Unknown fixture scenario: ${scenario}`)
   }
 
@@ -25,10 +25,14 @@ export async function withFixture(scenario, run) {
         rule('fixture-absent', {commands: ['absent']}),
       ]
     }
+    if (scenario === 'dnt') {
+      await writeFile(join(bin, 'tool'), '', {mode: 0o755})
+      rules = [rule('fixture-dnt', {supportsDoNotTrack: true}), rule('fixture-env')]
+    }
     return await run({
       platform: 'linux',
       home,
-      env: { HOME: home, PATH: bin },
+      env: { HOME: home, PATH: bin, ...(scenario === 'dnt' ? {DO_NOT_TRACK: '1'} : {}) },
       stdoutIsTTY: false,
       stat,
       access,
