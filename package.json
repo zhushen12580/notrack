@@ -1,9 +1,25 @@
 {
   "name": "notrack",
   "version": "0.1.0",
+  "description": "Read-only local telemetry checks and opt-out snippets for developer tools.",
+  "bin": {
+    "notrack": "dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "data/tools.json"
+  ],
+  "keywords": [
+    "cli",
+    "privacy",
+    "telemetry",
+    "do-not-track"
+  ],
   "scripts": {
     "test": "vitest run",
+    "test:package": "npm run build && node test/package.mjs",
     "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build --silent",
     "dev": "npm run build --silent && node dist/cli.js",
     "pretest": "npm run build --silent"
   },
