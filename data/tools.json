@@ -145,5 +145,212 @@
     "actions": [
       {"type": "manual", "instruction": "Confirm the installed version and active profile/user settings, then set telemetry.telemetryLevel to \"off\" in VS Code Settings (JSON). Check managed policy with your administrator. This disables product telemetry; independent extensions need their own controls."}
     ]
+  },
+  {
+    "id": "nuxt",
+    "name": "Nuxt (framework telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["nuxt"],
+    "configPaths": [],
+    "versionScope": "Official Nuxt telemetry opt-out contract checked 2026-11-21: NUXT_TELEMETRY_DISABLED=1 and DO_NOT_TRACK=1 stop the telemetry module before consent and project configuration are evaluated. DNT is checked first. Stored consent, user .nuxtrc and project settings are not read, so an unset flag gives unknown. Only the distinctive PATH-visible nuxt CLI is probed, not project dependencies. This scope excludes application analytics and independent modules. Implementation: https://github.com/nuxt/telemetry/blob/main/src/module.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": true,
+    "documentationUrl": "https://github.com/nuxt/telemetry#opting-out",
+    "precedence": {
+      "documentationUrl": "https://github.com/nuxt/telemetry/blob/main/src/module.ts",
+      "order": ["dnt", 0]
+    },
+    "settings": [
+      {"source": "env", "key": "NUXT_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "NUXT_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "astro",
+    "name": "Astro (CLI telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["astro"],
+    "configPaths": [],
+    "versionScope": "Official Astro CLI contract checked 2026-11-21: ASTRO_TELEMETRY_DISABLED=1 disables telemetry for the process. The persisted machine-wide telemetry preference is not read, so absent flags give unknown even though the CLI normally collects usage data. Only PATH-visible astro is probed, not project dependencies or project configuration. This scope excludes analytics added to the application by integrations or hosting providers.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://astro.build/telemetry/",
+    "settings": [
+      {"source": "env", "key": "ASTRO_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "ASTRO_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "angular-cli",
+    "name": "Angular CLI (usage analytics)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": [],
+    "configPaths": [
+      "{home}/.angular-config.json",
+      "{xdgConfig}/angular/config.json",
+      "{xdgConfig}/angular/.angular-config.json",
+      "{xdgConfig}/.angular-config.json"
+    ],
+    "versionScope": "Official Angular CLI analytics contract checked 2026-11-21: NG_CLI_ANALYTICS=false disables reporting independently of consent. The ambiguous ng command alone is not installation evidence; probe only Angular-specific user config paths. Files are existence evidence only: active/legacy global path selection, installed schema and project consent are not evaluated, so stored preferences alone remain unknown. Scope excludes third-party builders. Environment contract: https://github.com/angular/angular-cli/blob/main/packages/angular/cli/src/utilities/environment-options.ts ; paths: https://github.com/angular/angular-cli/blob/main/packages/angular/cli/src/utilities/config.ts ; disable guard: https://github.com/angular/angular-cli/blob/main/packages/angular/cli/src/analytics/analytics.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://angular.dev/cli/analytics",
+    "settings": [
+      {"source": "env", "key": "NG_CLI_ANALYTICS", "valueType": "string", "disabled": "false"}
+    ],
+    "actions": [
+      {"type": "env", "key": "NG_CLI_ANALYTICS", "value": "false"}
+    ]
+  },
+  {
+    "id": "gatsby",
+    "name": "Gatsby (CLI telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["gatsby"],
+    "configPaths": [],
+    "versionScope": "Official Gatsby CLI telemetry contract checked 2026-11-21: GATSBY_TELEMETRY_DISABLED=1 opts out. The persisted telemetry preference is not read, so absence of the flag is unknown. Only the distinctive PATH-visible gatsby CLI is probed; project dependencies are not searched. This scope excludes create-gatsby, application analytics and independent plugins. The same variable also suppresses feedback prompts: https://www.gatsbyjs.com/docs/cli-feedback/",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://www.gatsbyjs.com/docs/telemetry/",
+    "settings": [
+      {"source": "env", "key": "GATSBY_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "GATSBY_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "nx",
+    "name": "Nx (CLI usage telemetry)",
+    "category": "build-tool",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["nx"],
+    "configPaths": [],
+    "versionScope": "Official Nx CLI telemetry documentation checked 2026-11-21. Telemetry depends on workspace analytics consent in nx.json; CI collection requires explicit analytics=true. Installed version, consent and workspace configuration are not established by a PATH-visible nx CLI, so status remains unknown. Project files and dependencies are not probed. Nx Console extensions and Nx Cloud have separate telemetry controls; disabling the daemon or remote caching does not establish a CLI telemetry opt-out.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://nx.dev/docs/reference/telemetry",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm the installed Nx CLI version, then set analytics to false in each workspace's nx.json. Workspace files are outside this scan. Review Nx Console extension telemetry and Nx Cloud controls separately; NX_DAEMON=false and NX_NO_CLOUD=true do not establish that CLI usage analytics is disabled."}
+    ]
+  },
+  {
+    "id": "turborepo",
+    "name": "Turborepo (usage telemetry)",
+    "category": "build-tool",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": [],
+    "configPaths": [
+      "{xdgConfig}/turborepo/telemetry.json",
+      "{home}/Library/Application Support/turborepo/telemetry.json",
+      "{home}/AppData/Roaming/turborepo/telemetry.json"
+    ],
+    "versionScope": "Official Turborepo telemetry contract checked 2026-11-21: TURBO_TELEMETRY_DISABLED=1 or DO_NOT_TRACK=1 opts out. To avoid ambiguous turbo executables, probe only the dedicated user telemetry.json under standard OS config directories (Windows assumes default APPDATA). These files are existence evidence only: persisted preferences, installed schema and TURBO_CONFIG_DIR_PATH overrides are not evaluated, so no environment override means unknown. Project dependencies and task/application telemetry are outside scope. Implementation and path source: https://github.com/vercel/turborepo/blob/main/crates/turborepo-telemetry/src/config.rs ; config directory overrides: https://github.com/vercel/turborepo/blob/main/crates/turborepo-dirs/src/lib.rs",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": true,
+    "documentationUrl": "https://turborepo.dev/docs/telemetry",
+    "settings": [
+      {"source": "env", "key": "TURBO_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "TURBO_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "vercel-cli",
+    "name": "Vercel CLI (usage telemetry)",
+    "category": "build-tool",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["vercel"],
+    "configPaths": [],
+    "versionScope": "Official Vercel CLI telemetry contract checked 2026-11-21: VERCEL_TELEMETRY_DISABLED=1 overrides the configured telemetry preference for that process. The persisted preference and custom global-config directory are not read; absent flags are unknown. Probe only the distinctive vercel PATH command, not the short vc alias, project linking files or dependencies. Scope covers CLI telemetry, excluding hosting analytics, application SDKs and separate editor/agent plugins.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://vercel.com/docs/cli/about-telemetry",
+    "settings": [
+      {"source": "env", "key": "VERCEL_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "VERCEL_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "netlify-cli",
+    "name": "Netlify CLI (usage telemetry and error reports)",
+    "category": "build-tool",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["netlify"],
+    "configPaths": [],
+    "versionScope": "Official Netlify CLI environment opt-out contract checked 2026-11-21: NETLIFY_TELEMETRY_DISABLED=1 or DO_NOT_TRACK=1 disables usage telemetry and error reports. The persisted telemetryDisabled preference is not read, so missing flags give unknown. Only netlify on PATH is probed, excluding the short ntl alias, project state and dependencies. This scope excludes hosted site analytics, application code and separate integrations. Additional CLI preference documentation: https://docs.netlify.com/api-and-cli-guides/cli-guides/get-started-with-cli/#usage-data-collection",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": true,
+    "documentationUrl": "https://cli.netlify.com/",
+    "settings": [
+      {"source": "env", "key": "NETLIFY_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "NETLIFY_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "storybook",
+    "name": "Storybook (CLI telemetry)",
+    "category": "build-tool",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["storybook"],
+    "configPaths": [],
+    "versionScope": "Official Storybook telemetry contract checked 2026-11-21: STORYBOOK_DISABLE_TELEMETRY=true stops telemetry, including the boot event emitted before project configuration is evaluated. core.disableTelemetry in project config alone does not suppress that boot event. Project settings, command flags and installed version are not read, so the baseline is unknown. Probe only the distinctive storybook PATH command, not the short sb alias or project dependencies. Optional crash reporting has a separate opt-in; application and independent addon analytics are outside scope.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://storybook.js.org/docs/configure/telemetry",
+    "settings": [
+      {"source": "env", "key": "STORYBOOK_DISABLE_TELEMETRY", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "STORYBOOK_DISABLE_TELEMETRY", "value": "true"}
+    ]
+  },
+  {
+    "id": "expo",
+    "name": "Expo (CLI usage telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["expo"],
+    "configPaths": [],
+    "versionScope": "Official Expo CLI documentation checked 2026-11-21: modern @expo/cli supports EXPO_NO_TELEMETRY=1. The same expo command can belong to legacy expo-cli, whose analytics guard does not implement that variable. The installed CLI generation cannot be established without executing tools or inspecting dependencies, so even an environment opt-out stays unknown and suggestions require manual version confirmation. Project files are not read. Scope excludes EAS CLI, application analytics and Expo service traffic. Modern implementation: https://github.com/expo/expo/blob/main/packages/@expo/cli/src/utils/telemetry/index.ts ; legacy guard: https://github.com/expo/expo-cli/blob/main/packages/xdl/src/Env.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.expo.dev/more/expo-cli/",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm the installed version is the modern @expo/cli bundled with expo (SDK 46+), then set EXPO_NO_TELEMETRY=1 in the environment before running it. A PATH-visible expo may instead be legacy expo-cli, which requires separate verification or migration. This controls CLI usage collection; review EAS CLI and application analytics separately."}
+    ]
+  },
+  {
+    "id": "strapi",
+    "name": "Strapi (server usage telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["strapi"],
+    "configPaths": [],
+    "versionScope": "Official Strapi telemetry contract checked 2026-11-21: STRAPI_TELEMETRY_DISABLED=true disables server usage telemetry and project creation data collection. Set it before starting the CLI/server. Project UUID and package.json preferences are not read, so the baseline is unknown; only PATH-visible strapi is probed. This scope excludes already-built admin bundles, third-party plugins, Cloud CLI and AI service traffic. Rebuild the admin with the same opt-out to apply it there. Server guard: https://github.com/strapi/strapi/blob/main/packages/core/core/src/services/metrics/index.ts ; environment reference: https://docs.strapi.io/cms/configurations/environment",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.strapi.io/cms/usage-information",
+    "settings": [
+      {"source": "env", "key": "STRAPI_TELEMETRY_DISABLED", "valueType": "string", "disabled": "true"}
+    ],
+    "actions": [
+      {"type": "env", "key": "STRAPI_TELEMETRY_DISABLED", "value": "true"}
+    ]
   }
 ]

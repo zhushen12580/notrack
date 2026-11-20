@@ -154,5 +154,218 @@
       {"name": "macOS default user config is detection evidence only", "platform": "darwin", "installed": false, "files": {"{home}/Library/Application Support/Code/User/settings.json": "{\"telemetry.telemetryLevel\":\"off\"}"}, "status": "unknown", "detection": ["config: {home}/Library/Application Support/Code/User/settings.json"]},
       {"name": "Windows default user config is detection evidence only", "platform": "win32", "installed": false, "files": {"{home}/AppData/Roaming/Code/User/settings.json": "{\"telemetry.telemetryLevel\":\"off\"}"}, "status": "unknown", "detection": ["config: {home}/AppData/Roaming/Code/User/settings.json"]}
     ]
+  },
+  {
+    "id": "nuxt",
+    "platform": "linux",
+    "command": "nuxt",
+    "documentationUrl": "https://github.com/nuxt/telemetry#opting-out",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["consent", "project", "NUXT_TELEMETRY_DISABLED"],
+    "off": {"env": {"NUXT_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: NUXT_TELEMETRY_DISABLED"],
+    "fix": ["export NUXT_TELEMETRY_DISABLED='1'"],
+    "dnt": true,
+    "examples": [
+      {"name": "zero cannot establish consent or project preferences", "env": {"NUXT_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "Nuxt checks DNT before its dedicated opt-out", "env": {"NUXT_TELEMETRY_DISABLED": "1", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: DO_NOT_TRACK"]},
+      {"name": "DNT short-circuits an unclassified lower-priority flag", "env": {"NUXT_TELEMETRY_DISABLED": "synthetic-private-value", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: DO_NOT_TRACK"]},
+      {"name": "project-only Nuxt installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/nuxt": "", "{home}/project/nuxt.config.ts": "export default { telemetry: false }"}, "absent": true}
+    ]
+  },
+  {
+    "id": "astro",
+    "platform": "linux",
+    "command": "astro",
+    "documentationUrl": "https://astro.build/telemetry/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["persisted", "project", "CLI"],
+    "off": {"env": {"ASTRO_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: ASTRO_TELEMETRY_DISABLED"],
+    "fix": ["export ASTRO_TELEMETRY_DISABLED='1'"],
+    "examples": [
+      {"name": "an enabling-looking flag does not override an unread persisted preference", "env": {"ASTRO_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "Windows PATH recognizes Astro", "platform": "win32", "env": {"ASTRO_TELEMETRY_DISABLED": "1"}, "status": "disabled", "detection": ["PATH: astro"]},
+      {"name": "project-only Astro installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/astro": "", "{home}/project/astro.config.mjs": "export default {}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "angular-cli",
+    "platform": "linux",
+    "documentationUrl": "https://angular.dev/cli/analytics",
+    "installationFiles": {"{home}/.angular-config.json": "{}"},
+    "detection": ["config: {home}/.angular-config.json"],
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["NG_CLI_ANALYTICS", "consent", "ng", "project"],
+    "off": {"env": {"NG_CLI_ANALYTICS": "false"}, "files": {"{home}/.angular-config.json": "{}"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: NG_CLI_ANALYTICS"],
+    "configDetection": "{home}/.angular-config.json",
+    "fix": ["export NG_CLI_ANALYTICS='false'"],
+    "examples": [
+      {"name": "the ambiguous ng executable alone is insufficient", "installed": false, "pathCommands": ["ng"], "env": {"NG_CLI_ANALYTICS": "false"}, "absent": true},
+      {"name": "a saved user opt-out alone cannot establish effective settings", "files": {"{home}/.angular-config.json": "{\"cli\":{\"analytics\":false}}"}, "status": "unknown"},
+      {"name": "XDG Angular config detects the CLI without ng", "installed": false, "env": {"XDG_CONFIG_HOME": "/fixture/xdg", "NG_CLI_ANALYTICS": "false"}, "files": {"{xdgConfig}/angular/config.json": "{}"}, "status": "disabled", "detection": ["config: {xdgConfig}/angular/config.json"]},
+      {"name": "an explicit opt-out does not require parsing a damaged user config", "env": {"NG_CLI_ANALYTICS": "false"}, "files": {"{home}/.angular-config.json": "{synthetic-private-value"}, "status": "disabled", "evidence": ["env: NG_CLI_ANALYTICS"]},
+      {"name": "project-only Angular settings are not installation evidence", "installed": false, "files": {"{home}/project/angular.json": "{\"cli\":{\"analytics\":false}}", "{home}/project/node_modules/.bin/ng": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "gatsby",
+    "platform": "linux",
+    "command": "gatsby",
+    "documentationUrl": "https://www.gatsbyjs.com/docs/telemetry/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["persisted", "CLI", "plugins"],
+    "off": {"env": {"GATSBY_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: GATSBY_TELEMETRY_DISABLED"],
+    "fix": ["export GATSBY_TELEMETRY_DISABLED='1'"],
+    "examples": [
+      {"name": "zero does not prove a persisted Gatsby opt-out was removed", "env": {"GATSBY_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "unknown Gatsby flag contents stay private", "env": {"GATSBY_TELEMETRY_DISABLED": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "project-only Gatsby installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/gatsby": "", "{home}/project/gatsby-config.js": "module.exports = {}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "nx",
+    "platform": "linux",
+    "command": "nx",
+    "documentationUrl": "https://nx.dev/docs/reference/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["workspace", "consent", "Nx Console", "Nx Cloud"],
+    "off": {"files": {"{home}/project/nx.json": "{\"analytics\":false}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["nx.json", "analytics", "false", "Nx Console", "Nx Cloud"],
+    "manual": true,
+    "examples": [
+      {"name": "disabling the daemon is not a CLI analytics opt-out", "env": {"NX_DAEMON": "false"}, "status": "unknown"},
+      {"name": "disabling Nx Cloud is not a workspace analytics opt-out", "env": {"NX_NO_CLOUD": "true"}, "status": "unknown"},
+      {"name": "project settings and dependencies are outside the probe scope", "installed": false, "files": {"{home}/project/nx.json": "{\"analytics\":false}", "{home}/project/node_modules/.bin/nx": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "turborepo",
+    "platform": "linux",
+    "documentationUrl": "https://turborepo.dev/docs/telemetry",
+    "installationFiles": {"{xdgConfig}/turborepo/telemetry.json": "{}"},
+    "detection": ["config: {xdgConfig}/turborepo/telemetry.json"],
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["persisted", "turbo", "TURBO_CONFIG_DIR_PATH"],
+    "off": {"env": {"TURBO_TELEMETRY_DISABLED": "1"}, "files": {"{xdgConfig}/turborepo/telemetry.json": "{}"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: TURBO_TELEMETRY_DISABLED"],
+    "configDetection": "{xdgConfig}/turborepo/telemetry.json",
+    "fix": ["export TURBO_TELEMETRY_DISABLED='1'"],
+    "dnt": true,
+    "examples": [
+      {"name": "an ambiguous turbo executable alone is insufficient", "installed": false, "pathCommands": ["turbo"], "env": {"TURBO_TELEMETRY_DISABLED": "1"}, "absent": true},
+      {"name": "hiding the telemetry notice does not disable collection", "env": {"TURBO_TELEMETRY_MESSAGE_DISABLED": "1"}, "status": "unknown"},
+      {"name": "a saved opt-out is detection only when the effective config directory is unconfirmed", "env": {"TURBO_CONFIG_DIR_PATH": "/fixture/other"}, "files": {"{xdgConfig}/turborepo/telemetry.json": "{\"telemetry_enabled\":false}"}, "status": "unknown"},
+      {"name": "macOS standard user config provides evidence", "platform": "darwin", "installed": false, "env": {"TURBO_TELEMETRY_DISABLED": "1"}, "files": {"{home}/Library/Application Support/turborepo/telemetry.json": "{}"}, "status": "disabled", "detection": ["config: {home}/Library/Application Support/turborepo/telemetry.json"]},
+      {"name": "Windows standard user config provides evidence", "platform": "win32", "installed": false, "env": {"TURBO_TELEMETRY_DISABLED": "1"}, "files": {"{home}/AppData/Roaming/turborepo/telemetry.json": "{}"}, "status": "disabled", "detection": ["config: {home}/AppData/Roaming/turborepo/telemetry.json"]},
+      {"name": "project-only Turborepo installation is not probed", "installed": false, "files": {"{home}/project/turbo.json": "{}", "{home}/project/node_modules/.bin/turbo": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "vercel-cli",
+    "platform": "linux",
+    "command": "vercel",
+    "documentationUrl": "https://vercel.com/docs/cli/about-telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["CLI", "persisted", "hosting"],
+    "off": {"env": {"VERCEL_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: VERCEL_TELEMETRY_DISABLED"],
+    "fix": ["export VERCEL_TELEMETRY_DISABLED='1'"],
+    "examples": [
+      {"name": "the short vc alias alone is not distinctive installation evidence", "installed": false, "pathCommands": ["vc"], "absent": true},
+      {"name": "zero does not establish the persisted CLI preference", "env": {"VERCEL_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "project linking files and dependencies are not probed", "installed": false, "files": {"{home}/project/.vercel/project.json": "{}", "{home}/project/node_modules/.bin/vercel": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "netlify-cli",
+    "platform": "linux",
+    "command": "netlify",
+    "documentationUrl": "https://cli.netlify.com/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["usage telemetry", "error reports", "persisted"],
+    "off": {"env": {"NETLIFY_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: NETLIFY_TELEMETRY_DISABLED"],
+    "fix": ["export NETLIFY_TELEMETRY_DISABLED='1'"],
+    "dnt": true,
+    "examples": [
+      {"name": "the ntl alias alone is not distinctive installation evidence", "installed": false, "pathCommands": ["ntl"], "absent": true},
+      {"name": "zero cannot establish persisted telemetry state", "env": {"NETLIFY_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "project state is not a user-level installation probe", "installed": false, "files": {"{home}/project/.netlify/state.json": "{}", "{home}/project/node_modules/.bin/netlify": ""}, "absent": true}
+    ]
+  },
+  {
+    "id": "storybook",
+    "platform": "linux",
+    "command": "storybook",
+    "documentationUrl": "https://storybook.js.org/docs/configure/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["boot", "project", "crash"],
+    "off": {"env": {"STORYBOOK_DISABLE_TELEMETRY": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: STORYBOOK_DISABLE_TELEMETRY"],
+    "fix": ["export STORYBOOK_DISABLE_TELEMETRY='true'"],
+    "examples": [
+      {"name": "project opt-out does not prove the boot event is disabled", "files": {"{home}/project/.storybook/main.ts": "export default { core: { disableTelemetry: true } }"}, "status": "unknown"},
+      {"name": "the short sb alias alone is insufficient", "installed": false, "pathCommands": ["sb"], "absent": true},
+      {"name": "project-only Storybook installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/storybook": "", "{home}/project/.storybook/main.ts": "export default {}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "expo",
+    "platform": "linux",
+    "command": "expo",
+    "documentationUrl": "https://docs.expo.dev/more/expo-cli/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["CLI", "legacy", "application"],
+    "off": {"env": {"EXPO_NO_TELEMETRY": "1"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["EXPO_NO_TELEMETRY=1", "legacy", "version", "application"],
+    "manual": true,
+    "examples": [
+      {"name": "disabling detachment does not disable Expo telemetry", "env": {"EXPO_NO_TELEMETRY_DETACH": "1"}, "status": "unknown"},
+      {"name": "a debug flag does not prove telemetry is off", "env": {"EXPO_DEBUG": "1"}, "status": "unknown"},
+      {"name": "project-only Expo installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/expo": "", "{home}/project/app.json": "{\"expo\":{}}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "strapi",
+    "platform": "linux",
+    "command": "strapi",
+    "documentationUrl": "https://docs.strapi.io/cms/usage-information",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["project", "server", "admin", "STRAPI_TELEMETRY_DISABLED"],
+    "off": {"env": {"STRAPI_TELEMETRY_DISABLED": "true"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: STRAPI_TELEMETRY_DISABLED"],
+    "fix": ["export STRAPI_TELEMETRY_DISABLED='true'"],
+    "examples": [
+      {"name": "project package metadata is not read to infer a global opt-out", "files": {"{home}/project/package.json": "{\"strapi\":{\"telemetryDisabled\":true}}"}, "status": "unknown"},
+      {"name": "hiding update notifications is not a telemetry opt-out", "env": {"STRAPI_DISABLE_UPDATE_NOTIFICATION": "true"}, "status": "unknown"},
+      {"name": "project-only Strapi installation is not probed", "installed": false, "files": {"{home}/project/node_modules/.bin/strapi": "", "{home}/project/package.json": "{\"dependencies\":{\"@strapi/strapi\":\"5.0.0\"}}"}, "absent": true}
+    ]
   }
 ]

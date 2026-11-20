@@ -17,9 +17,10 @@ function platform(c, facts = {}, installed = true) {
   const bin = paths.join(home, 'bin')
   const xdg = facts.env?.XDG_CONFIG_HOME ?? paths.join(home, '.config')
   const expand = template => paths.normalize(template.replace('{home}', home).replace('{xdgConfig}', xdg))
-  const files = new Map(Object.entries(facts.files ?? {}).map(([path, contents]) => [expand(path), contents]))
-  const executable = paths.join(bin, c.command + (os === 'win32' ? '.EXE' : ''))
-  if (installed) files.set(executable, '')
+  const files = new Map(Object.entries({...(installed ? c.installationFiles : {}), ...facts.files}).map(([path, contents]) => [expand(path), contents]))
+  const executables = (facts.pathCommands ?? (installed && c.command ? [c.command] : []))
+    .map(command => paths.join(bin, command + (os === 'win32' ? '.EXE' : '')))
+  for (const executable of executables) files.set(executable, '')
   const missing = () => Object.assign(new Error('Synthetic missing file'), {code: 'ENOENT'})
   return {
     platform: os, home,
@@ -29,7 +30,7 @@ function platform(c, facts = {}, installed = true) {
       if (!files.has(path)) throw missing()
       return {isFile: () => true}
     },
-    async access(path) { expect(path).toBe(executable) },
+    async access(path) { expect(executables).toContain(path) },
     async readFile(path) {
       if (!files.has(path)) throw missing()
       return files.get(path)
@@ -49,9 +50,14 @@ function privateReport(report) {
   for (const text of ['/fixture/', 'C:\\\\fixture', 'synthetic-private-value']) expect(output).not.toContain(text)
 }
 
-test('catalog has the eight core tools and one independent case per shipped rule', () => {
+test('catalog has at least 19 tools, including 11 framework/build additions, and one independent case per rule', () => {
   expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
     'claude-code', 'codex', 'gemini-cli', 'gh', 'nextjs', 'dotnet', 'homebrew', 'vscode',
+  ]))
+  expect(rules.length).toBeGreaterThanOrEqual(19)
+  expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
+    'nuxt', 'astro', 'angular-cli', 'gatsby', 'nx', 'turborepo',
+    'vercel-cli', 'netlify-cli', 'storybook', 'expo', 'strapi',
   ]))
   expect(rules.map(rule => rule.id).sort()).toEqual(cases.map(c => c.id).sort())
   expect(new Set(cases.map(c => c.id)).size).toBe(cases.length)
@@ -67,13 +73,13 @@ for (const c of cases) {
       expect((await scan(selected, platform(c, {env: {...c.off.env, DO_NOT_TRACK: '1'}}, false))).tools).toEqual([])
     })
 
-    test('PATH detection, documented scope, default or unknown, and safe suggestion', async () => {
+    test('distinct installation evidence, documented scope, default or unknown, and safe suggestion', async () => {
       const rule = getRule(c)
       const p = platform(c)
       const baseline = await scan(rules, p)
       expect(baseline.tools.map(tool => tool.id)).toEqual([c.id])
       const tool = baseline.tools[0]
-      expect(tool.detection).toEqual(['PATH: ' + c.command])
+      expect(tool.detection).toEqual(c.detection ?? ['PATH: ' + c.command])
       expect(tool.status).toBe(c.defaultStatus)
       expect(tool.evidence).toEqual(['default: ' + c.ruleDefault])
       expect(tool.documentationUrl).toBe(c.documentationUrl)
@@ -96,7 +102,7 @@ for (const c of cases) {
       const report = await scan(selected, p)
       expect(report.tools[0].status).toBe(c.offStatus)
       expect(report.tools[0].evidence).toEqual(c.offEvidence)
-      expect(report.tools[0].detection).toEqual(['PATH: ' + c.command, ...(c.configDetection ? ['config: ' + c.configDetection] : [])])
+      expect(report.tools[0].detection).toEqual(c.detection ?? ['PATH: ' + c.command, ...(c.configDetection ? ['config: ' + c.configDetection] : [])])
       privateReport(report)
       if (c.offStatus === 'disabled') {
         expect(await renderFix(report, selected, p, 'bash')).toBe('# No telemetry opt-out suggestions.\n')
