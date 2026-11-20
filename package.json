@@ -1,0 +1,22 @@
+{
+  "name": "notrack",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build --silent && node dist/cli.js",
+    "pretest": "npm run build --silent"
+  },
+  "dependencies": {
+    "jsonc-parser": "3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
