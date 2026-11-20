@@ -1,0 +1,86 @@
+import { test, expect } from 'vitest'
+import { writeFile, mkdir, chmod } from 'node:fs/promises'
+import { join } from 'node:path'
+import { withFixture, rule } from './fixtures.mjs'
+import { scan } from '../dist/scan.js'
+import { renderTable } from '../dist/report.js'
+
+test('mixed detection, JSONC, sorting, privacy and status inference', async () => {
+  await withFixture('mixed', async (p, load) => {
+    const report = await scan(await load(), p)
+    expect(report.tools.map(t => [t.id, t.status])).toEqual([
+      ['fixture-broken', 'unknown'], ['fixture-config', 'disabled'], ['fixture-env', 'default_on'],
+    ])
+    expect(report.tools[1].detection).toEqual(['config: {home}/config.jsonc'])
+    expect(JSON.stringify(report)).not.toContain(p.home)
+    expect(JSON.stringify(report)).not.toContain('fake-secret')
+    const table = renderTable(report, true)
+    for (const code of [31, 32, 33]) expect(table).toContain('\x1b[' + code + 'm')
+    expect(table).toContain('Detected: 3  Enabled: 1  Disabled: 1  Unknown: 1')
+    expect(table).toContain('visible settings')
+  })
+})
+
+test('POSIX requires executable regular files, ignores empty PATH segments and searches all entries', async () => {
+  await withFixture('empty', async p => {
+    const bin = p.env.PATH
+    await writeFile(join(bin, 'tool'), '')
+    expect((await scan([rule('a')], p)).tools).toEqual([])
+    await chmod(join(bin, 'tool'), 0o755)
+    expect((await scan([rule('a')], {...p, env: {PATH: ':' + join(p.home, 'missing') + '::' + bin}})).tools).toHaveLength(1)
+    await mkdir(join(bin, 'directory'))
+    expect((await scan([rule('a', {commands: ['directory']})], p)).tools).toEqual([])
+  })
+})
+
+test('Windows uses case insensitive environment names, PATHEXT and explicit extensions', async () => {
+  const seen = []
+  const p = {platform: 'win32', home: 'C:\\Users\\fixture', env: {Path: ';C:\\bin;;', PathExt: '.EXE;.CMD'}, stdoutIsTTY: false,
+    stat: async path => { seen.push(path); if (path.toLowerCase() !== 'c:\\bin\\tool.cmd') throw Error(); return {isFile: () => true} },
+    access: async () => { throw Error('must not check POSIX execute') }}
+  for (const command of ['tool', 'tool.cmd']) {
+    expect((await scan([rule('a', {commands: [command]})], p)).tools).toHaveLength(1)
+  }
+  expect(seen.every(path => path.startsWith('C:\\bin\\'))).toBe(true)
+})
+
+test('XDG fallback/override, missing fields, wrong values, read errors, and existence-only configs', async () => {
+  await withFixture('empty', async p => {
+    await mkdir(join(p.home, '.config'))
+    await writeFile(join(p.home, '.config', 'tool.json'), '{"telemetry":false}')
+    const r = rule('a', {commands: [], configPaths: ['{xdgConfig}/tool.json'], settings: [
+      {source: 'config', path: '{xdgConfig}/tool.json', field: ['telemetry'], valueType: 'boolean', enabled: true, disabled: false},
+    ]})
+    for (const xdg of [undefined, 'relative', p.home + '/.config']) {
+      expect((await scan([r], {...p, env: {XDG_CONFIG_HOME: xdg}})).tools[0].status).toBe('disabled')
+    }
+    for (const [content, status] of [['{}', 'default_on'], ['{"telemetry":"fake-secret"}', 'unknown'], ['{', 'unknown'], ['null', 'unknown'], ['42', 'unknown'], ['[]', 'unknown']]) {
+      await writeFile(join(p.home, '.config', 'tool.json'), content)
+      expect((await scan([r], p)).tools[0].status).toBe(status)
+    }
+    expect((await scan([r], {...p, readFile: async () => { throw Error('fake-secret') }})).tools[0].status).toBe('unknown')
+    expect((await scan([{...r, settings: []}], p)).tools[0].status).toBe('default_on')
+    expect((await scan([{...r, defaultStatus: 'off', settings: []}], p)).tools[0].status).toBe('disabled')
+  })
+})
+
+test('environment values use declared types and never leak raw values', async () => {
+  await withFixture('mixed', async (p, load) => {
+    for (const [value, status] of [['1', 'disabled'], ['0', 'enabled'], ['fake-secret', 'unknown']]) {
+      const report = await scan(await load(), {...p, env: {...p.env, FIXTURE_DISABLED: value}})
+      expect(report.tools.find(t => t.id === 'fixture-env').status).toBe(status)
+      expect(JSON.stringify(report)).not.toContain('fake-secret')
+    }
+  })
+})
+
+test('missing configs do not override PATH detection and unsupported platforms are skipped', async () => {
+  await withFixture('mixed', async p => {
+    const r = rule('a', {configPaths: ['{home}/missing.json'], settings: [
+      {source: 'config', path: '{home}/missing.json', field: ['telemetry'], valueType: 'boolean', enabled: true, disabled: false},
+    ]})
+    expect((await scan([r], p)).tools[0].status).toBe('default_on')
+    expect((await scan([{...r, platforms: ['win32']}], p)).tools).toEqual([])
+    expect((await scan([{...r, defaultStatus: 'unknown'}], p)).tools[0].status).toBe('unknown')
+  })
+})

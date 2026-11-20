@@ -5,7 +5,9 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { createPlatform, type Platform } from './platform.js'
-import { emptyReport } from './report.js'
+import { renderTable } from './report.js'
+import { validateRules } from './rules.js'
+import { scan } from './scan.js'
 
 interface CliDependencies {
   platform: Platform
@@ -92,21 +94,22 @@ export async function main(argv: readonly string[], deps: CliDependencies): Prom
     }
   }
 
+  let rules
   try {
-    if (!Array.isArray(await deps.loadRules())) {
-      throw new Error('Expected an array of rules')
-    }
+    rules = validateRules(await deps.loadRules())
   } catch {
     deps.stderr.write('notrack: Could not load telemetry rules.\n')
     return 1
   }
 
+  const report = await scan(rules, deps.platform)
   if (options.json) {
-    deps.stdout.write(`${JSON.stringify(emptyReport(deps.platform))}\n`)
+    deps.stdout.write(`${JSON.stringify(report)}\n`)
   } else if (options.fix) {
     deps.stdout.write('# No telemetry opt-out suggestions.\n')
   } else {
-    deps.stdout.write('Detected: 0  Enabled: 0  Disabled: 0  Unknown: 0\n')
+    const color = options.color === true || (!options['no-color'] && deps.platform.stdoutIsTTY && deps.platform.env.NO_COLOR === undefined)
+    deps.stdout.write(renderTable(report, color))
   }
   return 0
 }

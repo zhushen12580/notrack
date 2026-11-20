@@ -103,3 +103,20 @@ test.each([
   expect(stdout.write).not.toHaveBeenCalled()
   expect(stderr.write).toHaveBeenCalledWith(expect.stringMatching(/rules/i))
 })
+
+test.each([
+  [false, {}, [], false], [true, {}, [], true], [true, {NO_COLOR: ''}, [], false],
+  [false, {NO_COLOR: '1'}, ['--color'], true], [true, {}, ['--no-color'], false],
+])('table color follows terminal, NO_COLOR and explicit flags', async (tty, env, args, colored) => {
+  const {main} = await import('../dist/cli.js')
+  await withFixture('mixed', async (p, loadRules) => {
+    let output = ''
+    const status = await main(args, {platform: {...p, stdoutIsTTY: tty, env: {...p.env, ...env}}, loadRules,
+      stdout: {write: text => { output += text }}, stderr: {write: () => {}}})
+    expect(status).toBe(0)
+    expect(output.includes('\x1b[')).toBe(colored)
+    expect(output).toContain('fixture-config')
+    expect(output).toContain('{home}/config.jsonc')
+    expect(output).not.toContain('fixture-absent')
+  })
+})
