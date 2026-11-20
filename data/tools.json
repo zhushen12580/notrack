@@ -1,1 +1,149 @@
-[]
+[
+  {
+    "id": "claude-code",
+    "name": "Claude Code (usage telemetry)",
+    "category": "ai-agent",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["claude"],
+    "configPaths": [],
+    "versionScope": "Official environment-variable contract checked 2026-11-21: DISABLE_TELEMETRY=1, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 and DO_NOT_TRACK=1 disable usage telemetry. Only those literal opt-outs are classified. This scope excludes separate error reporting, model requests and administrator OpenTelemetry exporters. Defaults depend on provider and account, so their absence is unknown. DISABLE_TELEMETRY also suppresses feature-flag fetching. Additional scope: https://code.claude.com/docs/en/data-usage",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": true,
+    "documentationUrl": "https://code.claude.com/docs/en/env-vars",
+    "settings": [
+      {"source": "env", "key": "DISABLE_TELEMETRY", "valueType": "string", "disabled": "1"},
+      {"source": "env", "key": "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "DISABLE_TELEMETRY", "value": "1"}
+    ]
+  },
+  {
+    "id": "codex",
+    "name": "Codex (built-in analytics)",
+    "category": "ai-agent",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["codex"],
+    "configPaths": ["{home}/.codex/config.toml"],
+    "versionScope": "Official analytics.enabled contract checked 2026-11-21. The unset default depends on the client. TOML, profile overrides, managed requirements and custom CODEX_HOME are not evaluated; the standard config file is detection evidence only, so even a saved opt-out remains unknown. analytics.enabled=false disables built-in analytics, not custom OTLP exporters, feedback or model-service traffic. Settings and installed-version applicability require manual confirmation. Config location: https://developers.openai.com/codex/config-basic",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://developers.openai.com/codex/config-reference",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm your client version and active config/profile: set [analytics] enabled = false in the effective config.toml (normally ~/.codex/config.toml, or CODEX_HOME/config.toml). This controls built-in analytics; custom OTLP metrics require otel.metrics_exporter = \"none\" separately. Review configured log/trace exporters and feedback separately."}
+    ]
+  },
+  {
+    "id": "gemini-cli",
+    "name": "Gemini CLI (usage statistics)",
+    "category": "ai-agent",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["gemini"],
+    "configPaths": ["{home}/.gemini/settings.json"],
+    "versionScope": "Official configuration reference checked 2026-11-21: the nested privacy.usageStatisticsEnabled schema dates from v0.3.0. Its documented default is true, but the installed schema version, authentication mode and higher-priority system/project settings are not established by this probe. The user file is detection evidence only; report unknown even for a saved false value. This usage-statistics control is separate from OpenTelemetry export: https://geminicli.com/docs/cli/telemetry/",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://geminicli.com/docs/reference/configuration/",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm the installed version uses the nested settings schema, then set privacy.usageStatisticsEnabled to false in ~/.gemini/settings.json and restart Gemini CLI. Check overriding system/project settings. This controls usage statistics; OpenTelemetry export is configured separately via telemetry.enabled or GEMINI_TELEMETRY_ENABLED."}
+    ]
+  },
+  {
+    "id": "gh",
+    "name": "GitHub CLI (core telemetry)",
+    "category": "cloud-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["gh"],
+    "configPaths": [],
+    "versionScope": "Official GH_TELEMETRY/DO_NOT_TRACK contract checked 2026-11-21. Classify GH_TELEMETRY=false and DO_NOT_TRACK=1 only; GH_TELEMETRY takes precedence. Unknown installed version, host and persisted YAML configuration prevent inferring the default or treating an enabling flag as proof of collection. GitHub Enterprise Server targets are excluded from collection. This covers core gh only, excluding extensions and Copilot. Scope: https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": true,
+    "documentationUrl": "https://cli.github.com/manual/gh_help_environment",
+    "precedence": {
+      "documentationUrl": "https://cli.github.com/manual/gh_help_environment",
+      "order": [0, "dnt"]
+    },
+    "settings": [
+      {"source": "env", "key": "GH_TELEMETRY", "valueType": "string", "disabled": "false"}
+    ],
+    "actions": [
+      {"type": "env", "key": "GH_TELEMETRY", "value": "false"}
+    ]
+  },
+  {
+    "id": "nextjs",
+    "name": "Next.js (CLI telemetry)",
+    "category": "framework-cli",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["next"],
+    "configPaths": [],
+    "versionScope": "Official Next.js CLI opt-out contract checked 2026-11-21: NEXT_TELEMETRY_DISABLED=1. A PATH-visible next is required; project dependencies are not searched. The persisted CLI preference and project/CI storage locations are not read, so the default is unknown and other flag values do not prove collection. This scope excludes application analytics, Vercel hosting and third-party packages. Implementation: https://github.com/vercel/next.js/blob/canary/packages/next/src/telemetry/storage.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://nextjs.org/telemetry",
+    "settings": [
+      {"source": "env", "key": "NEXT_TELEMETRY_DISABLED", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "NEXT_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  },
+  {
+    "id": "dotnet",
+    "name": ".NET (SDK telemetry)",
+    "category": "sdk",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["dotnet"],
+    "configPaths": [],
+    "versionScope": "Official .NET SDK opt-out contract checked 2026-11-21: DOTNET_CLI_TELEMETRY_OPTOUT=1. Microsoft SDK distributions default to collecting CLI usage, but a dotnet executable can be a runtime-only installation and does not establish the SDK version or distribution; absence of the opt-out is unknown. This scope concerns SDK CLI telemetry, not applications. Set the variable before installation to suppress the installer event; a current opt-out cannot undo past uploads.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://learn.microsoft.com/en-us/dotnet/core/tools/telemetry",
+    "settings": [
+      {"source": "env", "key": "DOTNET_CLI_TELEMETRY_OPTOUT", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "DOTNET_CLI_TELEMETRY_OPTOUT", "value": "1"}
+    ]
+  },
+  {
+    "id": "homebrew",
+    "name": "Homebrew (analytics)",
+    "category": "package-manager",
+    "platforms": ["linux", "darwin"],
+    "commands": ["brew"],
+    "configPaths": [],
+    "versionScope": "Official Homebrew analytics contract checked 2026-11-21 for macOS and Linux: HOMEBREW_NO_ANALYTICS=1. Only this documented literal is classified. The persisted brew analytics off preference and notification state are not read, so their absence from the environment gives unknown. This scope concerns Homebrew analytics, not analytics in installed formulae or casks.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.brew.sh/Analytics",
+    "settings": [
+      {"source": "env", "key": "HOMEBREW_NO_ANALYTICS", "valueType": "string", "disabled": "1"}
+    ],
+    "actions": [
+      {"type": "env", "key": "HOMEBREW_NO_ANALYTICS", "value": "1"}
+    ]
+  },
+  {
+    "id": "vscode",
+    "name": "VS Code (product telemetry)",
+    "category": "editor",
+    "platforms": ["linux", "darwin", "win32"],
+    "commands": ["code"],
+    "configPaths": [
+      "{xdgConfig}/Code/User/settings.json",
+      "{home}/Library/Application Support/Code/User/settings.json",
+      "{home}/AppData/Roaming/Code/User/settings.json"
+    ],
+    "versionScope": "Official telemetry documentation checked 2026-11-21. telemetry.telemetryLevel is available since VS Code 1.61; installed version, active profile, portable/custom user-data directory and managed policy are not verified. Standard Stable user paths are existence evidence only (Windows assumes default APPDATA), so even a saved off value remains unknown. This setting covers product telemetry, not independent extensions. Version source: https://code.visualstudio.com/updates/v1_61 ; paths: https://code.visualstudio.com/docs/configure/settings",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://code.visualstudio.com/docs/configure/telemetry",
+    "settings": [],
+    "actions": [
+      {"type": "manual", "instruction": "Confirm the installed version and active profile/user settings, then set telemetry.telemetryLevel to \"off\" in VS Code Settings (JSON). Check managed policy with your administrator. This disables product telemetry; independent extensions need their own controls."}
+    ]
+  }
+]

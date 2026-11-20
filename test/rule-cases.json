@@ -1,0 +1,158 @@
+[
+  {
+    "id": "claude-code",
+    "platform": "linux",
+    "command": "claude",
+    "documentationUrl": "https://code.claude.com/docs/en/env-vars",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["usage telemetry", "error reporting", "provider"],
+    "off": {"env": {"DISABLE_TELEMETRY": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: DISABLE_TELEMETRY"],
+    "fix": ["export DISABLE_TELEMETRY='1'"],
+    "dnt": true,
+    "examples": [
+      {"name": "a nonessential-traffic opt-out also disables usage telemetry", "env": {"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"}, "status": "disabled", "evidence": ["env: CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"]},
+      {"name": "an unclassified flag cannot prove telemetry is enabled", "env": {"DISABLE_TELEMETRY": "0"}, "status": "unknown"},
+      {"name": "unrecognized values stay private and unknown", "env": {"DISABLE_TELEMETRY": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "Windows PATH uses executable extensions", "platform": "win32", "env": {"DISABLE_TELEMETRY": "1"}, "status": "disabled", "detection": ["PATH: claude"]}
+    ]
+  },
+  {
+    "id": "codex",
+    "platform": "linux",
+    "command": "codex",
+    "documentationUrl": "https://developers.openai.com/codex/config-reference",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["TOML", "client", "OTLP"],
+    "off": {"files": {"{home}/.codex/config.toml": "[analytics]\nenabled = false\n"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["[analytics] enabled = false", "otel.metrics_exporter", "custom OTLP"],
+    "manual": true,
+    "configDetection": "{home}/.codex/config.toml",
+    "examples": [
+      {"name": "TOML enabling analytics cannot be parsed as JSON", "files": {"{home}/.codex/config.toml": "[analytics]\nenabled = true\n"}, "status": "unknown"},
+      {"name": "custom CODEX_HOME does not justify interpreting the default file", "env": {"CODEX_HOME": "/fixture/other"}, "files": {"{home}/.codex/config.toml": "[analytics]\nenabled = false\n"}, "status": "unknown"},
+      {"name": "malformed TOML remains unknown without exposing contents", "files": {"{home}/.codex/config.toml": "synthetic-private-value"}, "status": "unknown"}
+    ]
+  },
+  {
+    "id": "gemini-cli",
+    "platform": "linux",
+    "command": "gemini",
+    "documentationUrl": "https://geminicli.com/docs/reference/configuration/",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["v0.3.0", "schema", "OpenTelemetry"],
+    "off": {"files": {"{home}/.gemini/settings.json": "{\"privacy\":{\"usageStatisticsEnabled\":false}}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["privacy.usageStatisticsEnabled", "false", "version", "OpenTelemetry"],
+    "manual": true,
+    "configDetection": "{home}/.gemini/settings.json",
+    "examples": [
+      {"name": "legacy flat schema does not establish the installed version", "files": {"{home}/.gemini/settings.json": "{\"usageStatisticsEnabled\":false}"}, "status": "unknown"},
+      {"name": "OpenTelemetry opt-out alone says nothing about usage statistics", "env": {"GEMINI_TELEMETRY_ENABLED": "false"}, "status": "unknown"},
+      {"name": "malformed or unknown settings cannot prove an opt-out", "files": {"{home}/.gemini/settings.json": "{synthetic-private-value"}, "status": "unknown"}
+    ]
+  },
+  {
+    "id": "gh",
+    "platform": "linux",
+    "command": "gh",
+    "documentationUrl": "https://cli.github.com/manual/gh_help_environment",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["Enterprise Server", "extensions", "version"],
+    "off": {"env": {"GH_TELEMETRY": "false"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: GH_TELEMETRY"],
+    "fix": ["export GH_TELEMETRY='false'"],
+    "dnt": true,
+    "examples": [
+      {"name": "GH_TELEMETRY masks DNT even when the effective result is unconfirmed", "env": {"GH_TELEMETRY": "true", "DO_NOT_TRACK": "1"}, "status": "unknown", "evidence": ["env: GH_TELEMETRY"]},
+      {"name": "explicit off takes precedence over DNT", "env": {"GH_TELEMETRY": "false", "DO_NOT_TRACK": "1"}, "status": "disabled", "evidence": ["env: GH_TELEMETRY"]},
+      {"name": "unknown GH_TELEMETRY blocks DNT fallback", "env": {"GH_TELEMETRY": "synthetic-private-value", "DO_NOT_TRACK": "1"}, "status": "unknown", "evidence": ["env: GH_TELEMETRY"]}
+    ]
+  },
+  {
+    "id": "nextjs",
+    "platform": "linux",
+    "command": "next",
+    "documentationUrl": "https://nextjs.org/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["persisted", "project", "CLI"],
+    "off": {"env": {"NEXT_TELEMETRY_DISABLED": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: NEXT_TELEMETRY_DISABLED"],
+    "fix": ["export NEXT_TELEMETRY_DISABLED='1'"],
+    "examples": [
+      {"name": "zero does not prove a persisted opt-out was removed", "env": {"NEXT_TELEMETRY_DISABLED": "0"}, "status": "unknown"},
+      {"name": "unrecognized value remains unknown", "env": {"NEXT_TELEMETRY_DISABLED": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "project dependencies are outside the probe scope", "installed": false, "files": {"{home}/project/node_modules/.bin/next": "", "{home}/project/package.json": "{\"dependencies\":{\"next\":\"16.0.0\"}}"}, "absent": true}
+    ]
+  },
+  {
+    "id": "dotnet",
+    "platform": "linux",
+    "command": "dotnet",
+    "documentationUrl": "https://learn.microsoft.com/en-us/dotnet/core/tools/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["SDK", "runtime", "Microsoft"],
+    "off": {"env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: DOTNET_CLI_TELEMETRY_OPTOUT"],
+    "fix": ["export DOTNET_CLI_TELEMETRY_OPTOUT='1'"],
+    "examples": [
+      {"name": "dotnet alone cannot establish SDK distribution or default-on behavior", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "0"}, "status": "unknown"},
+      {"name": "hiding the welcome message is not an opt-out", "env": {"DOTNET_NOLOGO": "true"}, "status": "unknown"},
+      {"name": "invalid opt-out values stay unknown", "env": {"DOTNET_CLI_TELEMETRY_OPTOUT": "synthetic-private-value"}, "status": "unknown"}
+    ]
+  },
+  {
+    "id": "homebrew",
+    "platform": "darwin",
+    "command": "brew",
+    "documentationUrl": "https://docs.brew.sh/Analytics",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["analytics", "persisted"],
+    "off": {"env": {"HOMEBREW_NO_ANALYTICS": "1"}},
+    "offStatus": "disabled",
+    "offEvidence": ["env: HOMEBREW_NO_ANALYTICS"],
+    "fix": ["export HOMEBREW_NO_ANALYTICS='1'"],
+    "examples": [
+      {"name": "a flag without a documented enabling meaning cannot prove analytics is on", "env": {"HOMEBREW_NO_ANALYTICS": "0"}, "status": "unknown"},
+      {"name": "unrecognized value stays unknown", "env": {"HOMEBREW_NO_ANALYTICS": "synthetic-private-value"}, "status": "unknown"},
+      {"name": "Linux Homebrew recognizes the opt-out", "platform": "linux", "env": {"HOMEBREW_NO_ANALYTICS": "1"}, "status": "disabled"},
+      {"name": "native Windows is outside Homebrew support", "platform": "win32", "env": {"HOMEBREW_NO_ANALYTICS": "1"}, "absent": true}
+    ]
+  },
+  {
+    "id": "vscode",
+    "platform": "linux",
+    "command": "code",
+    "documentationUrl": "https://code.visualstudio.com/docs/configure/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": ["1.61", "policy", "extensions"],
+    "off": {"files": {"{xdgConfig}/Code/User/settings.json": "// synthetic user settings\n{\"telemetry.telemetryLevel\":\"off\"}"}},
+    "offStatus": "unknown",
+    "offEvidence": ["default: unknown"],
+    "fix": ["telemetry.telemetryLevel", "off", "version", "policy", "extensions"],
+    "manual": true,
+    "configDetection": "{xdgConfig}/Code/User/settings.json",
+    "examples": [
+      {"name": "legacy settings do not establish the product version", "files": {"{xdgConfig}/Code/User/settings.json": "{\"telemetry.enableTelemetry\":false}"}, "status": "unknown"},
+      {"name": "partial crash-only telemetry is not fully disabled", "files": {"{xdgConfig}/Code/User/settings.json": "{\"telemetry.telemetryLevel\":\"crash\"}"}, "status": "unknown"},
+      {"name": "malformed user config remains unknown", "files": {"{xdgConfig}/Code/User/settings.json": "{synthetic-private-value"}, "status": "unknown"},
+      {"name": "macOS default user config is detection evidence only", "platform": "darwin", "installed": false, "files": {"{home}/Library/Application Support/Code/User/settings.json": "{\"telemetry.telemetryLevel\":\"off\"}"}, "status": "unknown", "detection": ["config: {home}/Library/Application Support/Code/User/settings.json"]},
+      {"name": "Windows default user config is detection evidence only", "platform": "win32", "installed": false, "files": {"{home}/AppData/Roaming/Code/User/settings.json": "{\"telemetry.telemetryLevel\":\"off\"}"}, "status": "unknown", "detection": ["config: {home}/AppData/Roaming/Code/User/settings.json"]}
+    ]
+  }
+]

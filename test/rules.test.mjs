@@ -5,6 +5,14 @@ test('accepts complete rules and rejects duplicate IDs', () => {
   expect(validateRules([rule('a')])).toHaveLength(1)
   expect(() => validateRules([rule('a'), rule('a')])).toThrow()
 })
+
+test('accepts opt-out-only settings without inventing an enabled value', () => {
+  const setting = {source: 'env', key: 'OPT_OUT', valueType: 'string', disabled: '1'}
+  expect(validateRules([rule('a', {settings: [setting]})])).toHaveLength(1)
+  for (const patch of [{disabled: undefined}, {enabled: 0}, {enabled: '1'}]) {
+    expect(() => validateRules([rule('a', {settings: [{...setting, ...patch}]})])).toThrow()
+  }
+})
 test.each([
   {id: '../a'}, {name: ''}, {category: ''}, {platforms: ['invalid']}, {commands: ['../tool']},
   {commands: [], configPaths: []}, {configPaths: ['{home}/../secret']}, {configPaths: ['{other}/file']},

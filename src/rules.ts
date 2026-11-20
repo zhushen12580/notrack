@@ -6,7 +6,8 @@ export interface Setting {
   path?: string
   field?: string[]
   valueType: 'string' | 'boolean' | 'number'
-  enabled: Scalar
+  // Opt-out flags need not have a value that proves telemetry is enabled.
+  enabled?: Scalar
   disabled: Scalar
 }
 export interface Action {
@@ -77,8 +78,10 @@ export function validateRules(input: unknown): Rule[] {
     requireValid(Array.isArray(r.settings))
     for (const s of r.settings) {
       requireValid(s && ['env', 'config'].includes(s.source) && ['string', 'boolean', 'number'].includes(s.valueType))
-      requireValid(typeof s.enabled === s.valueType && typeof s.disabled === s.valueType && s.enabled !== s.disabled)
-      if (s.valueType === 'number') requireValid(Number.isFinite(s.enabled) && Number.isFinite(s.disabled))
+      requireValid(typeof s.disabled === s.valueType &&
+        (s.enabled === undefined || (typeof s.enabled === s.valueType && s.enabled !== s.disabled)))
+      if (s.valueType === 'number') requireValid(Number.isFinite(s.disabled) &&
+        (s.enabled === undefined || Number.isFinite(s.enabled)))
       if (s.source === 'env') requireValid(key(s.key))
       else requireValid(template(s.path) && r.configPaths.includes(s.path) &&
         list(s.field, text) && s.field.length > 0 && !s.field.some((k: string) => ['__proto__', 'constructor', 'prototype'].includes(k)))
