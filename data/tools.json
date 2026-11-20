@@ -544,5 +544,287 @@
     "actions": [
       {"type": "manual", "instruction": "When ready to renew your Firebase CLI login, run firebase logout followed by firebase login and decline the CLI and Emulator Suite usage and error reporting consent prompt. The shared credentials file is not inspected. Review the separate Gemini consent, VS Code integration and application Analytics settings independently."}
     ]
+  },
+  {
+    "id": "yarn",
+    "name": "Yarn (Modern package-manager telemetry)",
+    "category": "package-manager",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [],
+    "configPaths": [
+      "{home}/.yarnrc.yml"
+    ],
+    "versionScope": "Official Yarn Modern telemetry documentation checked 2026-11-21. Modern Yarn (v2+) documents enableTelemetry and yarn config set --home enableTelemetry 0; this is not a Yarn Classic (v1) command contract. The yarn executable can also belong to Hadoop YARN, so only the dedicated user .yarnrc.yml provides detection evidence. YAML is existence-only and may contain registry credentials: its contents are never read. Active version, yarnPath delegation, custom rc filename, project overrides and saved preferences are unconfirmed, so even an environment opt-out remains unknown. CI skips telemetry in Modern Yarn but is not used to infer the installed generation. User config and environment implementation: https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-core/sources/Configuration.ts",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://yarnpkg.com/advanced/telemetry",
+    "settings": [],
+    "actions": [
+      {
+        "type": "manual",
+        "instruction": "Confirm this is Yarn Modern (v2+), rather than Yarn Classic or Hadoop YARN. In the intended Modern Yarn environment, run yarn config set --home enableTelemetry 0, then review the effective version, rc filename and project/environment overrides. User YAML can contain registry credentials and is not read by this scanner."
+      }
+    ]
+  },
+  {
+    "id": "flutter",
+    "name": "Flutter (tool analytics and crash reporting)",
+    "category": "framework-cli",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "flutter"
+    ],
+    "configPaths": [],
+    "versionScope": "Official Flutter usage statistics and crash reporting contract checked 2026-11-21. The maintained Flutter SDK documents flutter --disable-analytics; the documented command sends an opt-out event before stopping subsequent reporting. This rule covers the Flutter development tool, not telemetry embedded in applications or third-party plugins. The installed SDK, saved consent and legacy/unified analytics schemas are not established by PATH, so the baseline is unknown and guessed config fields or suppression variables are not interpreted. The scanner never reads telemetry logs or invokes Flutter. Command implementation: https://github.com/flutter/flutter/blob/master/packages/flutter_tools/lib/src/runner/flutter_command_runner.dart",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.flutter.dev/reference/crash-reporting",
+    "settings": [],
+    "actions": [
+      {
+        "type": "command",
+        "program": "flutter",
+        "args": [
+          "--disable-analytics"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "vcpkg",
+    "name": "vcpkg (CLI metrics)",
+    "category": "package-manager",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "vcpkg"
+    ],
+    "configPaths": [],
+    "versionScope": "Official vcpkg CLI telemetry contract checked 2026-11-21. This covers invocations of vcpkg, not produced libraries. Upstream documents VCPKG_DISABLE_METRICS being set, regardless of value, as an opt-out. The scalar rule records the documented safe literal 1; other values remain conservatively unknown rather than enabled. Although telemetry is normally enabled, bootstrap -disableMetrics and invocation flags can disable it and are not inspected, so no-override status is unknown. No bootstrap script, installed tool or package build is executed. Environment semantics: https://learn.microsoft.com/en-us/vcpkg/users/config-environment#vcpkg_disable_metrics",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://learn.microsoft.com/en-us/vcpkg/about/privacy",
+    "settings": [
+      {
+        "source": "env",
+        "key": "VCPKG_DISABLE_METRICS",
+        "valueType": "string",
+        "disabled": "1"
+      }
+    ],
+    "actions": [
+      {
+        "type": "env",
+        "key": "VCPKG_DISABLE_METRICS",
+        "value": "1"
+      }
+    ]
+  },
+  {
+    "id": "zed",
+    "name": "Zed (client-side metrics and diagnostics)",
+    "category": "editor",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "zed"
+    ],
+    "configPaths": [],
+    "versionScope": "Official Zed client-side telemetry documentation checked 2026-11-21. Both telemetry.metrics and telemetry.diagnostics must be false to disable usage metrics and crash reporting. These settings do not disable required server-side metadata for hosted services such as AI or Collaboration. Installed version, active config directory, profile and platform/release-channel layers are not confirmed by PATH; a single top-level JSON preference is insufficient to prove the effective combined setting. This rule therefore reports unknown and gives manual settings guidance, without reading settings, logs, provider credentials or project files. Layered settings reference: https://zed.dev/docs/reference/all-settings",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://zed.dev/docs/telemetry",
+    "settings": [],
+    "actions": [
+      {
+        "type": "manual",
+        "instruction": "Open Zed Settings and search for telemetry. Set both telemetry.metrics = false and telemetry.diagnostics = false in the effective settings. Check the active profile, platform and release-channel overrides. These controls cover client-side metrics and crash reports; required metadata for hosted services such as AI and Collaboration is separate."
+      }
+    ]
+  },
+  {
+    "id": "aider",
+    "name": "Aider (opt-in analytics)",
+    "category": "ai-agent",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "aider"
+    ],
+    "configPaths": [],
+    "versionScope": "Official Aider opt-in analytics and options documentation checked 2026-11-21. aider --analytics-disable persistently disables analytics and dominates a session --analytics opt-in. AIDER_ANALYTICS_DISABLE=true is the corresponding environment boolean; only that literal is classified here. The absence of this flag cannot establish the persisted consent or permanent-disable preference, so baseline is unknown rather than presumed enabled or disabled. YAML configuration, .env files, analytics identifiers and credentials are not read. The scope excludes model requests and independent update checks. Environment option: https://aider.chat/docs/config/options.html#analytics ; implementation: https://github.com/Aider-AI/aider/blob/main/aider/args.py and https://github.com/Aider-AI/aider/blob/main/aider/analytics.py",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://aider.chat/docs/more/analytics.html",
+    "settings": [
+      {
+        "source": "env",
+        "key": "AIDER_ANALYTICS_DISABLE",
+        "valueType": "string",
+        "disabled": "true"
+      }
+    ],
+    "actions": [
+      {
+        "type": "command",
+        "program": "aider",
+        "args": [
+          "--analytics-disable"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jetbrains-toolbox",
+    "name": "JetBrains Toolbox App (usage statistics)",
+    "category": "developer-tool",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "jetbrains-toolbox"
+    ],
+    "configPaths": [],
+    "versionScope": "Official JetBrains Toolbox App settings and FAQ checked 2026-11-21. Toolbox App usage statistics depend on explicit consent and can be managed in its Settings. Current consent, installed version and private settings schema are not established by a PATH command, so state remains unknown and only UI guidance is provided. The generic toolbox alias is not used. This scope concerns Toolbox App usage statistics; each installed IDE has separate data-sharing controls, and download/update requests are separate from consented usage statistics. Consent reference: https://www.jetbrains.com/help/toolbox-app/frequently-asked-questions.html ; platform and executable reference: https://www.jetbrains.com/help/toolbox-app/installation.html",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://www.jetbrains.com/help/toolbox-app/introduction.html",
+    "settings": [],
+    "actions": [
+      {
+        "type": "manual",
+        "instruction": "Open the Toolbox App menu > Settings and turn off sending usage statistics. Confirm the setting in your installed version. Review data-sharing settings in each IDE separately; disabling Toolbox App usage statistics does not disable IDE telemetry or download/update requests."
+      }
+    ]
+  },
+  {
+    "id": "powershell",
+    "name": "PowerShell (pwsh telemetry)",
+    "category": "shell",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "pwsh"
+    ],
+    "configPaths": [],
+    "versionScope": "Official PowerShell telemetry contract checked 2026-11-21. This rule detects pwsh, not the separate Windows PowerShell powershell executable. POWERSHELL_TELEMETRY_OPTOUT must be set before starting the process and covers startup and session telemetry; the literal 1 is classified here, while the documented true/yes aliases are not modeled. Without this override, installed version/build and effective settings are unknown: PowerShell 7.6.2+ on Windows can also respect Windows optional diagnostic-data settings, which this tool rule does not use to infer PowerShell state. POWERSHELL_DIAGNOSTICS_OPTOUT controls IPC diagnostic pipes rather than this telemetry. This scope excludes independent module reporting and update requests.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_telemetry",
+    "settings": [
+      {
+        "source": "env",
+        "key": "POWERSHELL_TELEMETRY_OPTOUT",
+        "valueType": "string",
+        "disabled": "1"
+      }
+    ],
+    "actions": [
+      {
+        "type": "env",
+        "key": "POWERSHELL_TELEMETRY_OPTOUT",
+        "value": "1"
+      }
+    ]
+  },
+  {
+    "id": "go",
+    "name": "Go toolchain (telemetry collection and uploads)",
+    "category": "sdk",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "go"
+    ],
+    "configPaths": [],
+    "versionScope": "Official Go telemetry contract checked 2026-11-21. Go 1.23+ provides go telemetry off to disable both local collection and uploading. The local mode keeps counters locally without uploading; it is not complete opt-out. GOTELEMETRY and GOTELEMETRYDIR are read-only go env outputs, not environment overrides. A PATH-visible go does not establish the version or saved mode; the plain-text mode store is outside the JSON/JSONC setting parser and is not read or used for detection. Defaults and settings therefore remain unknown. The command is suggested only as a version-qualified manual step, never executed. This scope includes participating Go-maintained toolchain programs, not arbitrary applications written in Go.",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://go.dev/doc/telemetry",
+    "settings": [],
+    "actions": [
+      {
+        "type": "manual",
+        "instruction": "Confirm the active toolchain is Go 1.23 or later, then run go telemetry off to disable both local collection and uploading. The local mode only prevents uploads. GOTELEMETRY is read-only go env output; exporting GOTELEMETRY=off does not configure telemetry. For older toolchains, follow the official gotelemetry instructions and verify the applicable tools."
+      }
+    ]
+  },
+  {
+    "id": "dart",
+    "name": "Dart SDK (tool analytics)",
+    "category": "sdk",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "dart"
+    ],
+    "configPaths": [],
+    "versionScope": "Official Dart SDK usage metrics and crash reports documentation checked 2026-11-21. The maintained SDK documents dart --disable-analytics. Dart may be installed standalone or bundled with Flutter, but only a separate PATH-visible dart counts as Dart evidence; a flutter command is not reused. The persisted analytics preferences, SDK version and legacy/unified schemas are not read or inferred, so status is unknown without running the tool. This scope covers Dart development-tool reporting, not analytics in built applications or independent third-party tools. Command implementation: https://github.com/dart-lang/sdk/blob/main/pkg/dartdev/lib/dartdev.dart",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://dart.dev/get-dart",
+    "settings": [],
+    "actions": [
+      {
+        "type": "command",
+        "program": "dart",
+        "args": [
+          "--disable-analytics"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dbt",
+    "name": "dbt (CLI anonymous usage statistics)",
+    "category": "build-tool",
+    "platforms": [
+      "linux",
+      "darwin",
+      "win32"
+    ],
+    "commands": [
+      "dbt"
+    ],
+    "configPaths": [],
+    "versionScope": "Official dbt usage-statistics documentation checked 2026-11-21. One dbt command may select v1 Core or the v2 engine; these are counted as one tool. Current documentation distinguishes DBT_SEND_ANONYMOUS_USAGE_STATS for v1 through 1.10 and DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS for v1 1.11+ and v2, and documents DO_NOT_TRACK=1 for maintained versions. Installed version, engine and invocation overrides are unconfirmed, so no unconditional DNT support or environment conclusion is asserted. YAML profiles can contain database credentials and are neither probed nor read; project flags and user identifiers are also not read. Manual steps concern local CLI anonymous usage statistics, excluding hosted-platform and adapter/service reporting. Versioned source: https://github.com/dbt-labs/docs.getdbt.com/blob/current/website/docs/reference/global-configs/usage-stats.md",
+    "defaultStatus": "unknown",
+    "supportsDoNotTrack": false,
+    "documentationUrl": "https://docs.getdbt.com/reference/global-configs/usage-stats",
+    "settings": [],
+    "actions": [
+      {
+        "type": "manual",
+        "instruction": "Confirm the active dbt engine and version. For v1 through 1.10 use DBT_SEND_ANONYMOUS_USAGE_STATS=false; for v1 1.11+ or v2 use DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS=false. Current documentation also supports DO_NOT_TRACK=1. Verify effective invocation flags and version support. Database credentials in profiles.yml and project files are not read; hosted-platform and adapter telemetry are separate."
+      }
+    ]
   }
 ]

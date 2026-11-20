@@ -1,9 +1,32 @@
 import { readFile } from 'node:fs/promises'
 import { posix, win32 } from 'node:path'
-import { describe, test, expect } from 'vitest'
+import { afterEach, beforeEach, describe, test, expect, vi } from 'vitest'
 import { validateRules } from '../dist/rules.js'
 import { scan } from '../dist/scan.js'
 import { renderFix } from '../dist/fix.js'
+
+const { externalEffect } = vi.hoisted(() => ({
+  externalEffect: vi.fn(() => { throw new Error('Catalog verification must stay offline and never execute tools') }),
+}))
+vi.mock('node:child_process', async importOriginal => {
+  const actual = await importOriginal()
+  const guarded = {...actual, exec: externalEffect, execFile: externalEffect, spawn: externalEffect,
+    execSync: externalEffect, execFileSync: externalEffect, spawnSync: externalEffect, fork: externalEffect}
+  return {...guarded, default: guarded}
+})
+vi.mock('node:http', async importOriginal => {
+  const guarded = {...await importOriginal(), request: externalEffect, get: externalEffect}
+  return {...guarded, default: guarded}
+})
+vi.mock('node:https', async importOriginal => {
+  const guarded = {...await importOriginal(), request: externalEffect, get: externalEffect}
+  return {...guarded, default: guarded}
+})
+beforeEach(() => vi.stubGlobal('fetch', externalEffect))
+afterEach(() => {
+  try { expect(externalEffect).not.toHaveBeenCalled() }
+  finally { externalEffect.mockClear(); vi.unstubAllGlobals() }
+})
 
 // Facts and expected outcomes are authored separately from the shipped rules.
 // The adapter is entirely in memory: no host tools, environment, files or network.
@@ -50,11 +73,11 @@ function privateReport(report) {
   for (const text of ['/fixture/', 'C:\\\\fixture', 'synthetic-private-value']) expect(output).not.toContain(text)
 }
 
-test('catalog has at least 30 tools, including cloud/infrastructure additions, and one independent case per rule', () => {
+test('catalog has at least 40 distinct tools, the five required categories, and one independent case per rule', () => {
   expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
     'claude-code', 'codex', 'gemini-cli', 'gh', 'nextjs', 'dotnet', 'homebrew', 'vscode',
   ]))
-  expect(rules.length).toBeGreaterThanOrEqual(30)
+  expect(rules.length).toBeGreaterThanOrEqual(40)
   expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
     'nuxt', 'astro', 'angular-cli', 'gatsby', 'nx', 'turborepo',
     'vercel-cli', 'netlify-cli', 'storybook', 'expo', 'strapi',
@@ -63,9 +86,20 @@ test('catalog has at least 30 tools, including cloud/infrastructure additions, a
     'azure-cli', 'azure-developer-cli', 'google-cloud-cli', 'aws-sam-cli', 'aws-cdk',
     'okteto', 'garden', 'devpod', 'flyctl', 'supabase-cli', 'firebase-cli',
   ]))
+  expect(cases.map(c => c.id)).toEqual(expect.arrayContaining([
+    'yarn', 'flutter', 'vcpkg', 'zed', 'aider', 'jetbrains-toolbox',
+    'powershell', 'go', 'dart', 'dbt',
+  ]))
   expect(rules.map(rule => rule.id).sort()).toEqual(cases.map(c => c.id).sort())
   expect(new Set(cases.map(c => c.id)).size).toBe(cases.length)
-  expect(new Set(rules.map(rule => rule.category)).size).toBeGreaterThanOrEqual(5)
+  expect(rules.map(rule => rule.category)).toEqual(expect.arrayContaining([
+    'ai-agent', 'framework-cli', 'cloud-cli', 'package-manager', 'editor',
+  ]))
+  expect(cases.every(c => c.examples.length > 0)).toBe(true)
+
+  // A single executable must not be counted as several products/channels.
+  const commands = rules.flatMap(rule => rule.commands.map(command => command.toLowerCase()))
+  expect(new Set(commands).size).toBe(commands.length)
 })
 
 for (const c of cases) {
@@ -123,8 +157,22 @@ for (const c of cases) {
       }
     })
 
+    if (c.unreadConfig) {
+      test('existence-only configuration is never parsed, even when it contains private data', async () => {
+        const selected = [getRule(c)]
+        const p = platform(c, c.off)
+        p.readFile = vi.fn(() => { throw new Error('Private config contents must not be read') })
+        const report = await scan(selected, p)
+        expect(report.tools[0].detection).toEqual(c.detection)
+        expect(report.tools[0].status).toBe(c.offStatus)
+        await renderFix(report, selected, p, 'bash')
+        expect(p.readFile).not.toHaveBeenCalled()
+        privateReport(report)
+      })
+    }
+
     if (c.privateFiles) {
-      test('cloud credentials are neither read nor treated as installation evidence', async () => {
+      test('private configuration is neither read nor treated as installation evidence', async () => {
         const p = platform(c, {files: c.privateFiles})
         const readFile = p.readFile
         const reads = []

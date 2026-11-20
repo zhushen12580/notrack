@@ -587,5 +587,690 @@
       {"name": "Google Cloud opt-out does not disable Firebase CLI consent", "env": {"CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"}, "status": "unknown"},
       {"name": "project Firebase config does not establish CLI installation", "installed": false, "files": {"{home}/project/firebase.json": "{}", "{home}/project/.firebaserc": "{}", "{home}/project/node_modules/.bin/firebase": ""}, "absent": true}
     ]
+  },
+  {
+    "id": "yarn",
+    "platform": "linux",
+    "installationFiles": {
+      "{home}/.yarnrc.yml": ""
+    },
+    "detection": [
+      "config: {home}/.yarnrc.yml"
+    ],
+    "documentationUrl": "https://yarnpkg.com/advanced/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "Modern",
+      "Classic",
+      "Hadoop",
+      "YAML",
+      "credentials"
+    ],
+    "off": {
+      "env": {
+        "YARN_ENABLE_TELEMETRY": "0"
+      },
+      "files": {
+        "{home}/.yarnrc.yml": "enableTelemetry: false\nfixture: synthetic-private-value\n"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "Modern",
+      "yarn config set --home enableTelemetry 0",
+      "Classic",
+      "Hadoop"
+    ],
+    "manual": true,
+    "unreadConfig": true,
+    "examples": [
+      {
+        "name": "the ambiguous yarn executable alone cannot identify the package manager",
+        "installed": false,
+        "pathCommands": [
+          "yarn"
+        ],
+        "absent": true
+      },
+      {
+        "name": "Classic configuration does not establish a Modern Yarn installation",
+        "installed": false,
+        "files": {
+          "{home}/.yarnrc": "enableTelemetry false"
+        },
+        "absent": true
+      },
+      {
+        "name": "malformed existence-only YAML remains unknown without being parsed",
+        "files": {
+          "{home}/.yarnrc.yml": ": [synthetic-private-value"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "Windows user config is detection evidence without reading credentials",
+        "platform": "win32",
+        "status": "unknown",
+        "detection": [
+          "config: {home}/.yarnrc.yml"
+        ]
+      },
+      {
+        "name": "project Yarn configuration and local dependencies are outside the probe boundary",
+        "installed": false,
+        "files": {
+          "{home}/project/.yarnrc.yml": "enableTelemetry: false",
+          "{home}/project/node_modules/.bin/yarn": ""
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "flutter",
+    "platform": "linux",
+    "command": "flutter",
+    "documentationUrl": "https://docs.flutter.dev/reference/crash-reporting",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "usage statistics",
+      "crash reporting",
+      "SDK",
+      "opt-out event"
+    ],
+    "off": {
+      "files": {
+        "{home}/.flutter": "{\"enabled\":false}",
+        "{home}/.dart-tool/dart-flutter-telemetry.config": "{\"enabled\":false}"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "'flutter' '--disable-analytics'"
+    ],
+    "commandFix": true,
+    "privateFiles": {
+      "{home}/.flutter": "{\"enabled\":false,\"fixture\":\"synthetic-private-value\"}",
+      "{home}/.dart-tool/dart-flutter-telemetry.log": "synthetic-private-value"
+    },
+    "examples": [
+      {
+        "name": "Dart and third-party telemetry variables do not prove Flutter settings",
+        "env": {
+          "DART_SUPPRESS_ANALYTICS": "true",
+          "FLUTTER_SUPPRESS_ANALYTICS": "true",
+          "DO_NOT_TRACK": "1"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a Windows Flutter command is detected via PATHEXT",
+        "platform": "win32",
+        "status": "unknown",
+        "detection": [
+          "PATH: flutter"
+        ]
+      },
+      {
+        "name": "a pubspec or project SDK cache does not establish PATH installation",
+        "installed": false,
+        "files": {
+          "{home}/project/pubspec.yaml": "flutter:",
+          "{home}/project/.dart_tool/package_config.json": "{}"
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "vcpkg",
+    "platform": "linux",
+    "command": "vcpkg",
+    "documentationUrl": "https://learn.microsoft.com/en-us/vcpkg/about/privacy",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "VCPKG_DISABLE_METRICS",
+      "bootstrap",
+      "produced libraries",
+      "literal"
+    ],
+    "off": {
+      "env": {
+        "VCPKG_DISABLE_METRICS": "1"
+      }
+    },
+    "offStatus": "disabled",
+    "offEvidence": [
+      "env: VCPKG_DISABLE_METRICS"
+    ],
+    "fix": [
+      "export VCPKG_DISABLE_METRICS='1'"
+    ],
+    "examples": [
+      {
+        "name": "an unclassified metrics value is conservatively unknown rather than enabled",
+        "env": {
+          "VCPKG_DISABLE_METRICS": "synthetic-private-value"
+        },
+        "status": "unknown",
+        "evidence": [
+          "env: VCPKG_DISABLE_METRICS"
+        ]
+      },
+      {
+        "name": "the Microsoft environment opt-out works on Windows too",
+        "platform": "win32",
+        "env": {
+          "VCPKG_DISABLE_METRICS": "1"
+        },
+        "status": "disabled",
+        "detection": [
+          "PATH: vcpkg"
+        ]
+      },
+      {
+        "name": "the dotnet opt-out does not disable vcpkg telemetry",
+        "env": {
+          "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a project manifest does not prove vcpkg installation",
+        "installed": false,
+        "files": {
+          "{home}/project/vcpkg.json": "{\"dependencies\":[]}"
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "zed",
+    "platform": "linux",
+    "command": "zed",
+    "documentationUrl": "https://zed.dev/docs/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "client-side",
+      "diagnostics",
+      "metrics",
+      "hosted services",
+      "profile"
+    ],
+    "off": {
+      "files": {
+        "{home}/.config/zed/settings.json": "{\"telemetry\":{\"metrics\":false,\"diagnostics\":false}}"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "telemetry.metrics",
+      "telemetry.diagnostics",
+      "hosted services",
+      "profile"
+    ],
+    "manual": true,
+    "privateFiles": {
+      "{home}/.config/zed/settings.json": "{\"telemetry\":{\"metrics\":false},\"fixture\":\"synthetic-private-value\"}"
+    },
+    "examples": [
+      {
+        "name": "disabling only metrics does not establish complete client telemetry opt-out",
+        "files": {
+          "{home}/.config/zed/settings.json": "{\"telemetry\":{\"metrics\":false,\"diagnostics\":true}}"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "disabling only diagnostics cannot prove metrics are disabled",
+        "files": {
+          "{home}/.config/zed/settings.json": "{\"telemetry\":{\"diagnostics\":false}}"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a platform override can differ from top-level preferences",
+        "files": {
+          "{home}/.config/zed/settings.json": "{\"telemetry\":{\"metrics\":false,\"diagnostics\":false},\"linux\":{\"telemetry\":{\"metrics\":true}}}"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "an unconfirmed macOS preference path remains unknown",
+        "platform": "darwin",
+        "files": {
+          "{home}/.zed/settings.json": "{\"telemetry\":{\"metrics\":false,\"diagnostics\":false}}"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a project editor config alone does not prove installation",
+        "installed": false,
+        "files": {
+          "{home}/project/.zed/settings.json": "{\"telemetry\":{\"metrics\":false}}"
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "aider",
+    "platform": "linux",
+    "command": "aider",
+    "documentationUrl": "https://aider.chat/docs/more/analytics.html",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "opt-in",
+      "persisted",
+      "model requests",
+      "AIDER_ANALYTICS_DISABLE"
+    ],
+    "off": {
+      "env": {
+        "AIDER_ANALYTICS_DISABLE": "true"
+      }
+    },
+    "offStatus": "disabled",
+    "offEvidence": [
+      "env: AIDER_ANALYTICS_DISABLE"
+    ],
+    "fix": [
+      "'aider' '--analytics-disable'"
+    ],
+    "commandFix": true,
+    "privateFiles": {
+      "{home}/.aider.conf.yml": "fixture: synthetic-private-value",
+      "{home}/.aider/analytics.json": "{\"permanently_disable\":true}"
+    },
+    "examples": [
+      {
+        "name": "analytics-disable dominates the session analytics opt-in",
+        "env": {
+          "AIDER_ANALYTICS_DISABLE": "true",
+          "AIDER_ANALYTICS": "true"
+        },
+        "status": "disabled",
+        "evidence": [
+          "env: AIDER_ANALYTICS_DISABLE"
+        ]
+      },
+      {
+        "name": "false does not imply opted-in analytics",
+        "env": {
+          "AIDER_ANALYTICS_DISABLE": "false"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "an invalid opt-out value is not disclosed",
+        "env": {
+          "AIDER_ANALYTICS_DISABLE": "synthetic-private-value"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "the same analytics opt-out is recognized on Windows",
+        "platform": "win32",
+        "env": {
+          "AIDER_ANALYTICS_DISABLE": "true"
+        },
+        "status": "disabled"
+      },
+      {
+        "name": "a project aider configuration alone does not identify an installation",
+        "installed": false,
+        "files": {
+          "{home}/project/.aider.conf.yml": "analytics-disable: true"
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "jetbrains-toolbox",
+    "platform": "linux",
+    "command": "jetbrains-toolbox",
+    "documentationUrl": "https://www.jetbrains.com/help/toolbox-app/introduction.html",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "consent",
+      "usage statistics",
+      "IDE",
+      "download"
+    ],
+    "off": {
+      "files": {
+        "{home}/.local/share/JetBrains/Toolbox/.settings.json": "{\"statistics\":{\"enabled\":false}}"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "Toolbox App",
+      "Settings",
+      "usage statistics",
+      "IDE"
+    ],
+    "manual": true,
+    "privateFiles": {
+      "{home}/.local/share/JetBrains/Toolbox/.settings.json": "{\"statistics\":{\"enabled\":false},\"fixture\":\"synthetic-private-value\"}"
+    },
+    "examples": [
+      {
+        "name": "a generic toolbox command cannot identify JetBrains Toolbox",
+        "installed": false,
+        "pathCommands": [
+          "toolbox"
+        ],
+        "absent": true
+      },
+      {
+        "name": "a JetBrains IDE project directory is not Toolbox installation evidence",
+        "installed": false,
+        "files": {
+          "{home}/project/.idea/workspace.xml": "<project/>"
+        },
+        "absent": true
+      },
+      {
+        "name": "a macOS executable still cannot prove saved consent",
+        "platform": "darwin",
+        "status": "unknown"
+      }
+    ]
+  },
+  {
+    "id": "powershell",
+    "platform": "linux",
+    "command": "pwsh",
+    "documentationUrl": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "startup",
+      "before starting",
+      "7.6.2",
+      "Windows PowerShell"
+    ],
+    "off": {
+      "env": {
+        "POWERSHELL_TELEMETRY_OPTOUT": "1"
+      }
+    },
+    "offStatus": "disabled",
+    "offEvidence": [
+      "env: POWERSHELL_TELEMETRY_OPTOUT"
+    ],
+    "fix": [
+      "export POWERSHELL_TELEMETRY_OPTOUT='1'"
+    ],
+    "examples": [
+      {
+        "name": "the legacy Windows PowerShell executable is a separate product",
+        "platform": "win32",
+        "installed": false,
+        "pathCommands": [
+          "powershell"
+        ],
+        "absent": true
+      },
+      {
+        "name": "a Windows pwsh process also honors the explicit opt-out",
+        "platform": "win32",
+        "env": {
+          "POWERSHELL_TELEMETRY_OPTOUT": "1"
+        },
+        "status": "disabled",
+        "detection": [
+          "PATH: pwsh"
+        ]
+      },
+      {
+        "name": "named-pipe diagnostics opt-out is not the telemetry setting",
+        "env": {
+          "POWERSHELL_DIAGNOSTICS_OPTOUT": "1"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "an unrecognized opt-out value cannot prove enabled telemetry",
+        "env": {
+          "POWERSHELL_TELEMETRY_OPTOUT": "synthetic-private-value"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a project PowerShell script is not an installed executable",
+        "installed": false,
+        "files": {
+          "{home}/project/Build.ps1": ""
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "go",
+    "platform": "linux",
+    "command": "go",
+    "documentationUrl": "https://go.dev/doc/telemetry",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "1.23",
+      "local",
+      "upload",
+      "read-only",
+      "GOTELEMETRY"
+    ],
+    "off": {
+      "env": {
+        "GOTELEMETRY": "off"
+      },
+      "files": {
+        "{xdgConfig}/go/telemetry/mode": "off\n"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "1.23",
+      "go telemetry off",
+      "local",
+      "GOTELEMETRY"
+    ],
+    "manual": true,
+    "privateFiles": {
+      "{xdgConfig}/go/telemetry/mode": "off\n",
+      "{xdgConfig}/go/telemetry/local/fixture.json": "synthetic-private-value"
+    },
+    "examples": [
+      {
+        "name": "GOTELEMETRY is read-only go env output rather than an environment opt-out",
+        "env": {
+          "GOTELEMETRY": "off"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "local mode is not proof of all telemetry being off",
+        "files": {
+          "{xdgConfig}/go/telemetry/mode": "local\n"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "Windows Go still requires version and mode confirmation",
+        "platform": "win32",
+        "env": {
+          "GOTELEMETRY": "off"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "project go.mod alone cannot identify an installed toolchain",
+        "installed": false,
+        "files": {
+          "{home}/project/go.mod": "module fixture"
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "dart",
+    "platform": "linux",
+    "command": "dart",
+    "documentationUrl": "https://dart.dev/get-dart",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "SDK",
+      "usage metrics",
+      "crash reports",
+      "Flutter",
+      "persisted"
+    ],
+    "off": {
+      "files": {
+        "{home}/.dart-tool/dart-flutter-telemetry.config": "{\"enabled\":false}"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "'dart' '--disable-analytics'"
+    ],
+    "commandFix": true,
+    "privateFiles": {
+      "{home}/.dart-tool/dart-flutter-telemetry.config": "{\"enabled\":false}",
+      "{home}/.dart-tool/dart-flutter-telemetry.log": "synthetic-private-value"
+    },
+    "examples": [
+      {
+        "name": "Flutter PATH evidence is not counted again as a Dart executable",
+        "installed": false,
+        "pathCommands": [
+          "flutter"
+        ],
+        "absent": true
+      },
+      {
+        "name": "an invented Dart telemetry variable is not trusted",
+        "env": {
+          "DART_TELEMETRY_DISABLED": "1"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "a Windows Dart command is detected independently",
+        "platform": "win32",
+        "status": "unknown",
+        "detection": [
+          "PATH: dart"
+        ]
+      },
+      {
+        "name": "a package manifest and local SDK directory do not establish a PATH tool",
+        "installed": false,
+        "files": {
+          "{home}/project/pubspec.yaml": "name: fixture",
+          "{home}/project/dart-sdk/bin/dart": ""
+        },
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "dbt",
+    "platform": "linux",
+    "command": "dbt",
+    "documentationUrl": "https://docs.getdbt.com/reference/global-configs/usage-stats",
+    "defaultStatus": "unknown",
+    "ruleDefault": "unknown",
+    "scope": [
+      "v1",
+      "v2",
+      "DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS",
+      "DO_NOT_TRACK",
+      "credentials"
+    ],
+    "off": {
+      "env": {
+        "DBT_SEND_ANONYMOUS_USAGE_STATS": "false",
+        "DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS": "false",
+        "DO_NOT_TRACK": "1"
+      }
+    },
+    "offStatus": "unknown",
+    "offEvidence": [
+      "default: unknown"
+    ],
+    "fix": [
+      "version",
+      "DBT_SEND_ANONYMOUS_USAGE_STATS=false",
+      "DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS=false",
+      "DO_NOT_TRACK=1",
+      "credentials"
+    ],
+    "manual": true,
+    "privateFiles": {
+      "{home}/.dbt/profiles.yml": "send_anonymous_usage_stats: false\nfixture: synthetic-private-value",
+      "{home}/.dbt/.user.yml": "id: synthetic-private-value"
+    },
+    "examples": [
+      {
+        "name": "the v1 environment switch cannot prove behavior of an unidentified engine",
+        "env": {
+          "DBT_SEND_ANONYMOUS_USAGE_STATS": "false"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "the v2 switch and DNT do not establish an engine version",
+        "env": {
+          "DBT_ENGINE_SEND_ANONYMOUS_USAGE_STATS": "false",
+          "DO_NOT_TRACK": "1"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "credential-bearing profiles are not used to infer telemetry state",
+        "files": {
+          "{home}/.dbt/profiles.yml": "config:\n  send_anonymous_usage_stats: false\nfixture: synthetic-private-value"
+        },
+        "status": "unknown"
+      },
+      {
+        "name": "project dbt files do not establish an executable installation",
+        "installed": false,
+        "files": {
+          "{home}/project/dbt_project.yml": "name: fixture"
+        },
+        "absent": true
+      }
+    ]
   }
 ]
